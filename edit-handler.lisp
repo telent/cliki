@@ -71,12 +71,15 @@
       (with-page-surround (cliki request (format nil "Edit ``~A''" title)
 				 '(((meta :name "ROBOTS"
 				     :content "noindex,nofollow"))))
-	(format cliki::out "
- <form method=post>
- <!-- textarea wrap=virtual name=text rows=20 cols=80 -->~%")
+	(format cliki::out "<form method=post>~%")
 	(let ((default (format nil "<input type=hidden name=T0 value=BODY>
 <textarea wrap=virtual name=E0 rows=20 cols=80>
 Describe ~A here
+
+
+
+
+
 <hr>
 This page is presently *(Uncategorized): please add appropriate 
 _(topic markers) and remove this text
@@ -102,7 +105,13 @@ _(topic markers) and remove this text
  <br><input type=checkbox ~A name=rememberme > <b>Check this box to fill in your name automatically next time</b> (uses a cookie)
   <br><input type=submit value=Save name=Save></form></body></html>"
 		    (or unauth-username "A N Other")
-		    (if unauth-username "checked=checked" ""))))
+		    (if unauth-username "checked=checked" "")))
+	(let ((topics (loop for p being the hash-values of
+			    (cliki-pages cliki)
+			    append (car (page-index p :topic)))))
+	  (format out "Current topic markers: ~{~A~^ | ~} "
+		  (sort (remove-duplicates topics :test #'string-equal)
+			:test #'string-lessp))))
       t)))
 
 
