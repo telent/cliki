@@ -21,6 +21,17 @@
      (t
       (request-send-error request 500 "Eh?")))))
 
+(defun cliki-head-handler (request arg-string root)
+  (let* ((action (url-query (request-url request)))
+         (title (request-title request))
+         (file (merge-pathnames title root))
+         (out (request-stream request))
+         (date (file-write-date file)))
+    (if date
+        (request-send-headers request :last-modified date)
+      (request-send-headers request :response-code 404
+                            :response-text "Not found"))))
+
 (defun cliki-post-handler (request arg-string root)
   (let ((title  (request-title request)))
     (save-page request title root)))
@@ -48,7 +59,7 @@
   (rebuild-categories directory)
   (export-handler base-url (list 'cliki-get-handler directory)
                   :method :get)
-  (export-handler base-url (list 'cliki-get-handler directory)
+  (export-handler base-url (list 'cliki-head-handler directory)
                   :method :head)
   (export-handler base-url (list 'cliki-post-handler directory)
                   :method :post)
