@@ -18,7 +18,7 @@
     ;; entry for the same title has the same user name, don't add this one
     (unless (and (string= description "")
 		 (string= (third preceding) user))
-      (push entry changes)
+      (push entry (cliki-recent-changes cliki))
       (with-open-file (out (merge-pathnames #p"admin/recent-changes.dat"
 					    (cliki-data-directory cliki))
 			   :direction :output :if-exists :append
