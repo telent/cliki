@@ -1,38 +1,50 @@
 (in-package :cliki)
 
-(defun request-title (request)
-  (let* ((string (urlstring-unescape (request-path-info request)))
-         (pos (position #\/ string :from-end t)))
-    (subseq string (if pos (1+ pos) 0))))
+(defun request-title (request root)
+  (labels ((match-p (a b)
+                    (string-equal (substitute #\_ #\Space a)
+                                  (substitute #\_ #\Space b))))
+    (let* ((string (urlstring-unescape (request-path-info request)))
+           (pos (position #\/ string :from-end t))
+           (search-string (subseq string (if pos (1+ pos) 0)))
+           (candidates (mapcar #'pathname-name (directory root)))
+           (actual (find search-string candidates :test #'match-p)))
+      (when (string= search-string actual)
+        (return-from request-title actual))
+      (request-redirect request
+                        (merge-url (request-url request) (urlstring-escape title)))
+      nil)))
 
 (defun cliki-get-handler (request arg-string root)
-  (let* ((action (url-query (request-url request)))
-         (title (request-title request))
-         (file (merge-pathnames title root))
-         (out (request-stream request)))
-    (cond
-     ((not action)
-      (view-page request title root))
-     ((string-equal action "source")
-      (view-page-source request title root))
-     ((string-equal action "edit")
-      (edit-page request title root))
-     ;; can add in other ops like delete etc
-     (t
-      (request-send-error request 500 "Eh?")))))
+  (let ((title (request-title request root)))
+    (unless title (return-from cliki-get-handler))
+    (let ((action (url-query (request-url request)))
+          (file (merge-pathnames title root))
+          (out (request-stream request)))
+      (cond
+       ((not action)
+        (view-page request title root))
+       ((string-equal action "source")
+        (view-page-source request title root))
+       ((string-equal action "edit")
+        (edit-page request title root))
+       ;; can add in other ops like delete etc
+       (t
+        (request-send-error request 500 "Eh?"))))))
 
 (defun cliki-head-handler (request arg-string root)
-  (let* ((title (request-title request))
-         (file (merge-pathnames title root))
-         (date (file-write-date file)))
-    (if date
-        (request-send-headers request :last-modified date)
-      (request-send-headers request :response-code 404
-                            :response-text "Not found"))))
+  (let ((title (request-title request root)))
+    (unless title (return-from cliki-head-handler))
+    (let* ((file (merge-pathnames title root))
+           (date (file-write-date file)))
+      (if date
+          (request-send-headers request :last-modified date)
+        (request-send-headers request :response-code 404
+                              :response-text "Not found")))))
 
 (defun cliki-post-handler (request arg-string root)
   (let ((title  (request-title request)))
-    (save-page request title root)))
+    (if title (save-page request title root))))
 
 (defun cliki-list-all-pages-handler (request arg-string url-root fs-root)
   (let ((pages (mapcar #'pathname-name (directory fs-root :sort t))))
