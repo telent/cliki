@@ -15,7 +15,7 @@
 			  :cache-control "no-cache")
     (cliki-page-header
      (request-cliki request) request (format nil "Edit ``~A''" title)
-     "<meta name=\"ROBOTS\" content=\"noindex,nofollow\">")
+     '(((meta :name "ROBOTS" :content "noindex,nofollow"))))
     (format (request-stream request) "
 <form method=post>
 <textarea wrap=virtual name=text rows=20 cols=80>~%")
