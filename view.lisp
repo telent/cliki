@@ -31,6 +31,7 @@
 			((a :title "CLiki home page" :class "logo" :href ,(ahref nil))
                          "CL" ((span :class "sub") "iki"))
                         (span "the common lisp wiki")
+
                         ((div :id "navbar")
                          ((a :href ,(ahref (cliki-default-page-name cliki)) )
 			  "Home")
@@ -48,23 +49,43 @@
                (subseq out 0 (search "<DELETEME>" out))
                stream)))))
 
+(defun request-for-version (page request)
+  (let ((u (request-url request)))
+    (integer-for (car (url-query-param u "v")) 
+		 :default (car (page-versions page)))))
+
+(defun version-links (cliki page request)
+  (let ((ver (request-for-version page request)))
+    (loop for v in (reverse
+		    (subseq (page-versions page) 
+			    0 (min 5 (length (page-versions page)))))
+	  if (= ver v)
+	  collect `((b :title 
+		       ,(universal-time-to-http-date
+			 (file-write-date (page-pathname page :version ver))))
+		    ,ver)
+	  else
+	  collect `((a :href ,(format nil "~A?v=~A" 
+				      (urlstring (page-url cliki page))  v)
+		       :title 
+		       ,(universal-time-to-http-date
+			 (file-write-date (page-pathname page :version v))))
+		    ,v))))
+  
 (defmethod cliki-page-footer
     ((cliki cliki-view) request title)
   (let* ((page (find-page cliki title))
 	 (out (request-stream request))
 	 (text
 	  (format nil
-		  "<a href=\"edit/~A\">Edit page</a> | <a href=\"~A?source\">View source</a> | Last edit: ~A | "
-		  (urlstring-escape title) (urlstring-escape title)
-		  (if page
-		      (universal-time-to-rfc-date
-		       (file-write-date (page-pathname page)))
-		      "(none)"))))
+		  "<a href=\"edit/~A\">Edit page</a> | <a href=\"~A?source\">View source</a> | Revisions: "
+		  (urlstring-escape title) (urlstring-escape title))))
     (html-stream out
 		 `((form  :action ,(urlstring (merge-url (cliki-url-root cliki)
 							 "admin/search")))
 		   ((div :id "footer")
 		    ,text
+		    ,@(and page (version-links cliki page request))
 		    ((input :name "words" :size "30"))
 		    ((input :type "submit" :value "search")))))
     (format out "<p>CLiki pages can be edited by anyone at any time.  Imagine a fearsomely comprehensive disclaimer of liability.  Now fear, comprehensively")
@@ -137,38 +158,42 @@
     (with-input-from-string (in in-string)
       (subst-markup-in-stream cliki in o))))
 
-(defun write-page-contents-to-stream (cliki page out-stream)
+(defun write-page-contents-to-stream (cliki page out-stream
+				      &key (version :newest))
   "Read the file for PAGE and write to OUT-STREAM, substituting weird markup language elements as we go. "  
-  (with-open-file (in-stream (page-pathname page) :direction :input)
+  (with-open-file (in-stream (page-pathname page :version version)
+			     :direction :input)
     (subst-markup-in-stream cliki in-stream out-stream)))
 
-
-(defun view-page (cliki request page title)
-  (request-send-headers request)
-  (with-page-surround (cliki request title)
-    (if page
-	(progn
-	  (let* ((topics (remove page (page-topics page)))
-		 (backlinks
-		  (sort (set-difference
-			 (remove page (page-backlinks page))
-			 topics)
-			#'string-lessp :key #'page-title)))
-	    (write-page-contents-to-stream cliki page out)
-	    (when topics
-	      (format out "<hr><p><b>Page~p in this topic: </b> "
-		      (length topics))
-	      (dolist (c topics)
-		(format out "~A &nbsp; "
-			(write-a-href cliki (page-title c) nil))))
-	    (when backlinks
-	      (format out "<hr><p><b>~A linked from: </b> "
-		      (if topics "Also" "This page is"))
-	      (dolist (c backlinks)
-		(format out "~A &nbsp; "
-			(write-a-href cliki (page-title c) nil))))))
-	(format out
-		"This page doesn't exist yet.  Please create it if you want to")))
+(defun view-page (cliki request page title &key (version :newest))
+  (let* ((pathname (if page (page-pathname page :version version)))
+	 (lmtime (file-write-date pathname)))
+    (request-send-headers request :conditional t 
+			  :last-modified lmtime)
+    (with-page-surround (cliki request title)
+      (if page
+	  (progn
+	    (let* ((topics (remove page (page-topics page)))
+		   (backlinks
+		    (sort (set-difference
+			   (remove page (page-backlinks page))
+			   topics)
+			  #'string-lessp :key #'page-title)))
+	      (write-page-contents-to-stream cliki page out :version version)
+	      (when topics
+		(format out "<hr><p><b>Page~p in this topic: </b> "
+			(length topics))
+		(dolist (c topics)
+		  (format out "~A &nbsp; "
+			  (write-a-href cliki (page-title c) nil))))
+	      (when backlinks
+		(format out "<hr><p><b>~A linked from: </b> "
+			(if topics "Also" "This page is"))
+		(dolist (c backlinks)
+		  (format out "~A &nbsp; "
+			  (write-a-href cliki (page-title c) nil))))))
+	  (format out
+		  "This page doesn't exist yet.  Please create it if you want to"))))
 
   t)
 
