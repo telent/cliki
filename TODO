@@ -6,4 +6,14 @@ Look at the source for XXX ("fix me eventually") and TODO ("fix me soon")
 comments for things to do in support of those features.  You can use
 the supplied Perl script to do this for you: "perl TODO.pl *.lisp"
 
-   
+Check for more harcoded URL/directory information and make it look at
+cliki-request slots instead
+
+(a) where our data directory is
+    
+(b) where our base url is
+
+Need to decide what to do with titles that contain / . .. etc.  Guess
+we could url-encode them ...
+
+
