@@ -1,45 +1,65 @@
 (in-package :cliki)
 
 (defclass page-object ()
-  ((pathname :initarg :pathname :accessor page-pathname)
-   (view-url :initarg :view-url :accessor page-view-url)
-   (edit-url :initarg :edit-url :accessor page-edit-url)
-   (delete-url :initarg :delete-url :accessor page-delete-url)         
-   (title :initarg :title :reader page-title)))
+  ((title :initarg :title :reader page-title)))
 
-(defvar *all-pages* (make-hash-table)
+(defmethod page-pathname ((page page-object))
+  (merge-pathnames
+   (make-pathname :name (page-title page))
+   *page-pathname-defaults*))
+
+(defparameter *all-pages* (make-hash-table)
   "Hash table of all pages, keyed on page name as interned into CLIKI-PAGES")
 (defmethod add-page ((page page-object))
   (setf (gethash (intern (page-title page) "CLIKI-PAGES") *all-pages*) page))
 (defun find-page (title)
   (gethash (intern title  "CLIKI-PAGES") *all-pages*))
 
-;;; now all of a sudden this class has to know about all of its subclasses.
-;;; at some stage we'll include a way for new subclasses to register their
-;;; filetype here
-(defun class-for-type (type)
-  (cond ((string-equal type "phtml") 'phtml-page-object)
-        (t 'page-object)))
-  
-(defun make-page (title base-url directory)
-  (or
-   (find-page title)
-   (let* ((wildpath (merge-pathnames
-                     (make-pathname :type :wild)
-                     (merge-pathnames title directory)))
-          (view-url (merge-url base-url (urlstring-escape title)))
-          (edit-url (merge-url (merge-url base-url "edit/")
-                               (urlstring-escape title)))
-          (delete-url (merge-url (merge-url base-url "delete/")
-                                 (urlstring-escape title)))
-          (real-name (elt (directory wildpath) 0)))
-     (add-page (make-instance
-                (class-for-type (pathname-type real-name))
-                :title title :pathname real-name :view-url view-url
-                :edit-url edit-url :delete-url delete-url)))))
+(defun make-page (title)
+  (or (find-page title)
+      (add-page (make-instance 'page-object :title title))))
+
+(defmethod view-page ((page page-object) request)
+  (let ((out (request-stream request))
+        (file (page-pathname page))
+        (title (page-title page)))
+    (request-send-headers request)
+    (format out
+            "<html><head><title>Cliki : ~A</title></head>
+<body><h1>~A</h1>~%" title title)
+    (if (probe-file file)
+        (with-open-file (in file :direction :input)
+          (if (ignore-errors (peek-char nil in nil))
+              (write-stream-to-stream (request-base-url request) in out))
+          (format out "<hr><a href=\"~A?edit\">Edit this page</a>"
+                  (urlstring (page-url page))))
+      (format out
+              "internal error: can't find file ~A"
+              file))))
+
+
+
+
+
 
 (defgeneric view-page ((page page-object) request))
 (defgeneric make-edit-form ((page page-object) request))
+(defmethod make-edit-form ((page (eql 'page-object)) request)
+  (let* ((title
+          (pathname-name (parse-namestring
+                          (urlstring-unescape (request-path-info request)))))
+         (out (request-stream request)))
+    (format out
+            "<html><head><title>Cliki : Create ``~A''</title></head>
+<body><h1>Create ``~A''</h1>
+<p>You may choose the type of page to create, from <ul>"
+            title title )
+    (dolist (ty *classes-for-types*)
+      (format out "<li> <a href=\"~A.~A\">~A</a></li>~%"
+              (request-path-info request) (car ty) (cdr ty)))
+    (format out "</ul></body>~%")))
+    
+                    
 (defgeneric process-post-request ((page page-object) request))
 (defgeneric search-relevance ((page page-object) search-criterion))
 
@@ -54,13 +74,12 @@
   ;; really should lock around this to provide some measure of
   ;; atomicity
   (handler-case
-   (let* ((old-path (page-pathname page))
-          (old-url (page-view-url page))
-          (old-dir
-           (merge-pathnames
-            (make-pathname :type :wild :version :wild :name :wild) old-path)))
+   (let ((old-url (page-view-url page))
+         (old-dir (page-pathname-defaults page)))
      (rename-file (page-pathname page) (make-pathname :name title))
      (delete-page page)
+     ;; old-url ends in a non-directory component; we ignore that bit
+     ;; cos make-page only wants the directory part
      (make-page title old-url old-dir))
    (file-error (c) (declare (ignorable c)) nil)))
 
