@@ -14,7 +14,7 @@
 		:initarg :short-forms
 		:initform '((#\_ :link)
 			    (#\* :topic)
-			    (#\/ :search)
+			    (#\/ :legacy-search)
 			    (#\# ((#\H :clhs)))
 			    (#\> :download)
 			    (#\: :long-form)))))
