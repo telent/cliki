@@ -72,7 +72,10 @@ is set by update-page-indices (at startup and after edits).  "
 		       t)
 		     "admin/cliki.css" t)
 
-
+    (install-handler cliki
+		     (lambda (request)
+		       (request-send-error request 404 "not found"))
+		     "favicon.ico" nil)
     (install-handler cliki 'cliki-search-handler "admin/search" nil)
     (install-handler cliki `(view-recent-changes) "Recent%20Changes" nil)
     (install-handler cliki `(rdf-recent-changes) "recent-changes.rdf" t)
