@@ -1,0 +1,10 @@
+;;; -*- Lisp -*-
+(in-package :user)
+
+(defsystem cliki
+  :depends-on (ARANEIDA )
+  :source-pathname #.(translate-logical-pathname #p"telent:cliki;")
+  :components ((:file "defpackage")               
+               (:file "view" :depends-on ("defpackage"))
+               (:file "edit" :depends-on ("defpackage"))))
+

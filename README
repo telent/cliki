@@ -1,0 +1,84 @@
+-*- Text -*-
+
+Interactive user-updatable web pages a la wiki (http://www.c2.com/cgi/wiki)
+
+* Content domain
+
+Lisp and Scheme-based tools that aid with web applications in one way
+or another
+
+** Categories
+
+language implementation, http server, application server, html output,
+http client, etc
+
+Categories need to be chosen in suck a way as to make hierarchies seem
+worthwhile.  Hierarchies are for people who don't already know what
+they're looking for.  So the CMUCL page needs to represent that it's a
+CL implementation; Araneida needs to represent that it works with CMUCL.
+Figure out what to do with portable code: we could do the "one degree
+of separation" thing (foo requires a portable CL, CMUCL is a portable
+CL ergo foo is related to CMUCL) but do we not end up relating
+absolutely everything to everything else if we take this too far?
+
+* Features
+
+Accept (subset of) HTML?
+
+Internal link syntax is _(link to me) not LinkToMe; StudlyCaps don't go
+well with lisp.  Spaces and underscores are interchangeable: "Foo_Bar"
+and "Foo%20Bar" refer to the same page (after all, we don't bother
+with underscores in lisp much either)
+
+Special "quote" (haha) syntax to indicate inline and display-mode code
+inserts; ideally using separators that won't conflict with the code
+itself
+
+'(cl
+(defun foo (x) 
+  (* x 2))
+)
+
+'(scheme
+(define (foo x)
+  (* 2 x))
+)
+
+Intervening code will be pretty-printed in the appropriate language.
+For extra points, CL symbols could be HyperSpec links etc etc.
+
+Can delete empty pages.  Renaming is a cut & paste operation.
+
+Use categories and keywords to allow people to layer hierarchies atop
+the general mess.
+
+Templated pages would be neat: fillout forms for "new implementation",
+"new tool", whatever
+
+Metapages: the "foo" metapage is a search for all pages with "foo" in the 
+title, followed by all pages with "foo" in the body.  Actually we
+could do this as a real page with embedded /(foo) meaning "insert the
+search here".  
+
+If we wanted to pin the search result and turn the thing into a static
+page, how would we go about that?  Cut & paste from "View source" will
+do if our update process knows how to replace URLs that point to us
+with the internal link syntax: would be doubly cool to do this because
+also the URL drag & drop in netscape has a v. similar effect.
+
+Idea: What mileage do we get from allowing sexpual input in the first
+place?  Limited until motif textareas gain the ability to match
+parens.  But it will happen eventually - given which, do we have to
+interpret the page every time, or can we somehow "compile" it?
+
+
+* Implementation decisions
+
+How to store pages: stick them in the filesystem with names like their
+titles.  Leave markup until display time.
+
+Use araneida after porting it to :sockets
+
+One handler for viewing pages, another to edit them
+
+
