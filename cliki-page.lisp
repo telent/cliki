@@ -12,8 +12,8 @@
 					     (cliki-idf cliki term))))))))
 
 (defmethod page-url ((page cliki-page))
-  (merge-url (urlstring-escape (page-title page))
-	     (cliki-url-root (page-cliki page))))
+  (merge-url (cliki-url-root (page-cliki page))
+	     (urlstring-escape (page-title page))))
 	     
 
 (defmethod print-object ((page cliki-page) stream)
