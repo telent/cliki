@@ -1,29 +1,29 @@
 (in-package :cliki)
 
-(defun cliki-edit-get-handler (request arg-string)
-  (let ((page (find-page arg-string)))
-    (make-edit-form page request)))
+(defun cliki-get-handler (request arg-string root)
+  (let* ((action (url-query (request-url request)))
+         (title (urlstring-unescape (request-path-info request)))
+         (file (merge-pathnames title root))
+         (out (request-stream request)))
+    (cond
+     ((not action)
+      (view-page request title root))
+     ((string-equal action "edit")
+      (edit-page request title root))
+     ;; can add in other ops like delete etc
+     (t
+      (request-send-error request 500 "Eh?")))))
 
-(defun cliki-edit-post-handler (request arg-string)
-  (let ((page (find-page arg-string)))
-    (process-post-request page request)))
-
-(defun cliki-get-handler (request arg-string)
-  (let ((page (find-page arg-string)))
-    (if page
-        (view-page page request)
-      (view-create-page-menu request arg-string))))
+(defun cliki-post-handler (request arg-string root)
+  (let ((title (urlstring-unescape (request-path-info request))))
+    (save-page request title root)))
 
 (defun export-handlers (base-url directory)
-  (export-handler base-url 'cliki-get-handler)
-  (export-handler (merge-url base-url "edit/") 'cliki-edit-get-handler
+  (export-handler base-url (list 'cliki-get-handler directory)
                   :method :get)
-  (export-handler (merge-url base-url "edit/") 'cliki-edit-get-handler
+  (export-handler base-url (list 'cliki-get-handler directory)
                   :method :head)
-  (export-handler (merge-url base-url "edit/") 'cliki-edit-post-handler
+  (export-handler base-url (list 'cliki-post-handler directory)
                   :method :post)
-  (mapc
-   (lambda (filename)
-     (make-page (pathname-name filename) base-url directory))
-   (directory directory)))
-
+  (export-handler base-url (lambda (r rest) (request-redirect r "index"))
+                  :method :get :match :exact))
