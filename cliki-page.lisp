@@ -3,7 +3,15 @@
 (defmethod page-index ((page cliki-page) index)
   (cdr (assoc index (page-indices page))))
 
+(defmethod page-pathname ((page cliki-page) &key (version :newest))
+  (let ((pathname (slot-value page 'pathname))
+	(newest (car (page-versions page))))
+    (when (eql version :newest) (setf version newest))
+    (if (zerop version)
+	pathname
+	(make-pathname :type (princ-to-string version) :defaults pathname))))
 
+    
 (defmethod (setf page-index) (new-value (page cliki-page) index)
   (setf (cdr (assoc index (page-indices page))) new-value))
 
@@ -55,6 +63,3 @@
 	   (dolist (i (find-token chars stream dispatch))
 	     (funcall output i))))
       (end-of-file (c) (declare (ignore c)) nil))))
-
-
-
