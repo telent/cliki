@@ -1,5 +1,8 @@
 (in-package :cliki)
 
+(define-condition cliki-page-save-rejected (http-internal-server-error)
+  ((reason :initarg :reason :reader rejected-reason)))
+
 (defmethod form-element-for-keyword ((cliki cliki-view) n keyword &rest args)
   (declare (ignore args))
   nil)
@@ -71,7 +74,7 @@
       (with-page-surround (cliki request (format nil "Edit ``~A''" title)
 				 '(((meta :name "ROBOTS"
 				     :content "noindex,nofollow"))))
-	(format cliki::out "<form method=post>~%")
+	(format cliki::out "<form method=post>~%<input type=hidden name=version value=~A>~%" (if page (car (page-versions page)) 0))
 	(let ((default (format nil "<input type=hidden name=T0 value=BODY>
 <textarea wrap=virtual name=E0 rows=20 cols=80>
 Describe ~A here
@@ -140,44 +143,36 @@ _(topic markers) and remove this text
 			      (make-pathname :type "titles") n)))
       (let* ((title (or title titl))
 	     (*default-pathname-defaults* (cliki-data-directory cliki))
-	     (filename (merge-pathnames (escape-for-filename title)))
-	     (page
-	      (or page
-		  (make-instance 'cliki-page
-				 :title title :names (list title)
-				 :pathname filename
-				 :cliki cliki)))
-	     (old-filename (merge-pathnames (page-pathname page)))
 	     (body (request-body request))
+	     (summary (body-param "summary" body))
+	     (version (integer-for (body-param "version" body) ))
 	     (username (cliki-user-name
 			cliki (or (request-user request)
-				  (body-param "name" body))))
-	     (title-filename (title-file filename)))
-	#+nil
-	(when (string= username "A N Other")
-	  (request-send-error request 403 "Anonymous posting is disabled: please use a real name (yours, for preference)")
-	  (return-from save-page nil))
-	(save-stream cliki request filename)
-	(with-open-file (out-file title-filename :direction :output)
-	  (with-standard-io-syntax
-	    (write (page-names page) :stream out-file)))
-	;; in cliki 0.4.1 we changed the mapping from title => pathname
-	;; to cope with characters like # . / % etc.  Old filenames
-	;; continue to work, but when pages are saved they'll use the
-	;; new name.  To avoid needing to migrate all repositories at
-	;; once, we do it lazily on save-page
-	(unless (string= (namestring filename) (namestring old-filename))
-	  (let ((names (list old-filename (title-file old-filename))))
-	    (setf (page-pathname page) filename)
-	    (dolist (f names)
-	      (when (probe-file f)
-		(format *terminal-io* "Deleting ~S ~%" f)
-		(delete-file f))) ))
-	(add-recent-change cliki (get-universal-time) title
-			   username
-			   (body-param "summary" body))
-	(setf (gethash (canonise-title title) (cliki-pages cliki)) page)
-	(update-page-indices cliki page)
+				  (body-param "name" body)))))
+	(setf page 
+	      (or page 
+		  (make-instance 'cliki-page
+				 :title title :names (list title)
+				 :versions (list 0)
+				 :pathname 
+				 (merge-pathnames (escape-for-filename title))
+				 :cliki cliki)))
+	(when (zerop (length summary)) (setf summary nil))
+	(when (or summary (not (can-save-as-version-p 
+				cliki page version username)))
+	  (incf version)
+	  (setf summary (or summary "(none)")))
+	(let ((pn (page-pathname page :version version)))
+	  (check-page-save-allowed cliki page version username)
+	  (save-stream cliki request pn)
+	  (with-open-file (out-file (title-file pn)  :direction :output)
+	    (with-standard-io-syntax
+	      (write (page-names page) :stream out-file)))
+	  (when summary
+	    (add-recent-change cliki (get-universal-time) title
+			       username summary))
+	  (setf (gethash (canonise-title title) (cliki-pages cliki)) 
+		(cliki-load-page cliki pn)))
 	(update-idf cliki)
 	title))))
 
@@ -192,23 +187,21 @@ _(topic markers) and remove this text
     (unless (request-user request)
       (if (body-param "rememberme" body)
 	  (setf cookie (cliki-user-cookie
-			cliki (body-param "name" body))))
-      (if (and (not (body-param "rememberme" body))
-	       (request-cookie request "username"))
-	  ;; cookie previously set; seems reasonable that unticking the box
-	  ;; should be interpreted as a request to clear it
-	  (setf cookie (cliki-user-cookie cliki nil))))
-    (handler-case
+			cliki (body-param "name" body)))
+	  (if (request-cookie request "username")
+	      ;; cookie previously set; seems reasonable that unticking the box
+	      ;; should be interpreted as a request to clear it
+	      (setf cookie (cliki-user-cookie cliki nil)))))
+    (handler-case 
 	(setf title (save-page cliki request))
-      (error (c)
-	(request-send-error request 500 "Unable to save file: ~A" c))
-      (:no-error (c)
-	(declare (ignorable c))
-	(request-send-headers request :set-cookie cookie)
-	(format out "Thanks for editing ~A.  You probably need to `reload' or `refresh' to see your changes take effect"
-		(format nil "<a href=\"~A\">~A</a>"
-			(urlstring (merge-url
-				    (cliki-url-root cliki)
-				    (request-path-info request)))
-			title))))
+      (file-error (c) (signal 'http-internal-server-error 
+			      :client-message (format nil "~A" c))))
+    (request-send-headers request :set-cookie cookie)
+    (with-page-surround (cliki request "Thanks")
+      (format cliki::out "Thanks for editing ~A.  You probably need to `reload' or `refresh' to see your changes take effect"
+	      (format nil "<a href=\"~A\">~A</a>"
+		      (urlstring (merge-url
+				  (cliki-url-root cliki)
+				  (request-path-info request)))
+		      title)))
     t))
