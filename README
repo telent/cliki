@@ -4,42 +4,88 @@ Interactive user-updatable web pages a la wiki (http://www.c2.com/cgi/wiki)
 
 * Content domain
 
-Lisp and Scheme-based tools that aid with web applications in one way
-or another
+The immediate use of the application will be as a tool to maintain an
+information repository about Lisp and Scheme-based tools that aid with
+web applications in one way or another
 
-** Categories
+* Navigation architecture
 
-language implementation, http server, application server, html output,
-http client, etc
+There are two basic models for web information repositories: the
+directory (classic example: Yahoo) and the stew with a search
+interface (google).  Hierarchies are for browsers - people who don't
+already know what they're looking for, or who need to be convinced
+that the repository contains any useful information about what they're
+looking for.  Stews are for searchers - people who know what they want
+and who think we have it.
 
-Categories need to be chosen in suck a way as to make hierarchies seem
-worthwhile.  Hierarchies are for people who don't already know what
-they're looking for.  So the CMUCL page needs to represent that it's a
-CL implementation; Araneida needs to represent that it works with CMUCL.
-Figure out what to do with portable code: we could do the "one degree
-of separation" thing (foo requires a portable CL, CMUCL is a portable
-CL ergo foo is related to CMUCL) but do we not end up relating
-absolutely everything to everything else if we take this too far?
+The world is more of a Whole Sort Of General Mishmash than a
+hierarchy, however, so we don't _keep_ stuff in a hierarchy, we keep
+it in a stew: arbitrary hierarchies composed of document searches can
+be layered on top of it for a given purpose.
 
-* Features
+So, the content of a document defines where and whether it appears in
+a given hierarchy.  The CMUCL page needs to represent that it's a
+CL implementation; Araneida needs to represent that it works with
+CMUCL.
 
-Accept (subset of) HTML?
+* Searching the stew
 
-Internal link syntax is _(link to me) not LinkToMe; StudlyCaps don't go
-well with lisp.  Spaces and underscores are interchangeable: "Foo_Bar"
-and "Foo%20Bar" refer to the same page (after all, we don't bother
-with underscores in lisp much either)
+Searches can be done on
+- page title
+- page content
+- presence/absence of a category
+- value of a category 
+- page class
 
-Special "quote" (haha) syntax to indicate inline and display-mode code
+Suppose that we make logical relationships between categories, and
+have the relevance in a category search be related to how many logical
+inferences we need to make to get from one category to another.
+That's phase 2, though ...
+
+* Page editing
+
+A page object knows how to 
+
+- render itself for viewing 
+
+- render itself for editing
+
+- accept a piece of POST body for updating itself with edit results.
+
+- return its relevance for a given search criterion
+
+- delete itself
+  (implemented by the abstract object)
+
+- set and return its page title
+  On a rename, the old page gets a 302 (301?  Whichever is
+  "permanent") to avoid 404 bookmark lossitude
+  (implemented by the abstract object)
+
+** PHTML-PAGE-OBJECT: Arbitrary parsed HTML text object
+
+Presently there is one kind of page object, and it's the arbitrary
+text object.  Future revisions may allow for other objects.
+
+*** Viewing/Editing
+
+- Accept (subset of) HTML, with extra markup conveniences
+
+- Internal link syntax is _(link to me) (as opposed to wiki's
+LinkToMe; StudlyCaps don't go well with lisp).  Spaces and underscores
+are interchangeable: "Foo_Bar" and "Foo%20Bar" refer to the same page
+(after all, we don't bother with underscores in lisp much either)
+
+- Special "quote" (haha) syntax to indicate inline and display-mode code
 inserts; ideally using separators that won't conflict with the code
 itself
 
-'(cl
+'((cl :mode :display)
 (defun foo (x) 
   (* x 2))
 )
 
-'(scheme
+'((scheme :mode :inline)
 (define (foo x)
   (* 2 x))
 )
@@ -47,18 +93,8 @@ itself
 Intervening code will be pretty-printed in the appropriate language.
 For extra points, CL symbols could be HyperSpec links etc etc.
 
-Can delete empty pages.  Renaming is a cut & paste operation.
-
-Use categories and keywords to allow people to layer hierarchies atop
-the general mess.
-
-Templated pages would be neat: fillout forms for "new implementation",
-"new tool", whatever
-
-Metapages: the "foo" metapage is a search for all pages with "foo" in the 
-title, followed by all pages with "foo" in the body.  Actually we
-could do this as a real page with embedded /(foo) meaning "insert the
-search here".  
+- Searches: /(foo) is a search for all pages with "foo" in the title,
+followed by all pages with "foo" in the body.
 
 If we wanted to pin the search result and turn the thing into a static
 page, how would we go about that?  Cut & paste from "View source" will
@@ -66,19 +102,37 @@ do if our update process knows how to replace URLs that point to us
 with the internal link syntax: would be doubly cool to do this because
 also the URL drag & drop in netscape has a v. similar effect.
 
+*** Categories/Keywords
+
+  *(implementation)             ; we are in the "implementation" category
+  *(year 2000 1999)             ; we have values "1999" and "2000" for "year"
+
+To be thought about: does this actually gain us an awful lot over
+a search on links: if "cmucl" contains text "cmucl is a _(common lisp
+implementation)" it should show up well-rated in searches for "common
+lisp implementation"
+
+** Other object types
+
+Templated pages would be neat: fillout forms for "new implementation",
+"new tool", whatever.
+
+* Implementation decisions
+
+How to store pages: stick them in the filesystem with names like their
+titles.  Read them from disk and do markup at display time.
+
+Use araneida after porting it to :sockets
+
+One handler for "view" method, another for "edit"
+
+* To think about later
+
 Idea: What mileage do we get from allowing sexpual input in the first
 place?  Limited until motif textareas gain the ability to match
 parens.  But it will happen eventually - given which, do we have to
 interpret the page every time, or can we somehow "compile" it?
 
-
-* Implementation decisions
-
-How to store pages: stick them in the filesystem with names like their
-titles.  Leave markup until display time.
-
-Use araneida after porting it to :sockets
-
-One handler for viewing pages, another to edit them
-
-
+VC would be nice, chiefly for  the ability to do a "blame" view of the
+document where different authors or different revisions could show up
+in different colours
