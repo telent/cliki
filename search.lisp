@@ -28,13 +28,17 @@
     (document-vector-cosine terms doc-terms)))
 
 ;;; default method: for (foo "bar" "baz"), return 1 iff the search
-;;; term is "bar" or "baz"
+;;; term is (foo "bar"), (foo "baz") or (foo)
+
 (defmethod search-term-relevance ((cliki cliki-instance) page
 				  term &rest args)
   (if
-   (member (car args) (cadr (assoc term (page-indices page)))
-	   :test (lambda (x y)
-		   (string-equal (princ-to-string x) (princ-to-string y))))
+   (cond (args
+	  (member (car args) (cadr (assoc term (page-indices page)))
+		  :test (lambda (x y)
+			  (string-equal (princ-to-string x)
+					(princ-to-string y)))))
+	 (t (assoc term (page-indices page))))
    1 0))
   
 
