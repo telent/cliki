@@ -3,22 +3,6 @@
 (defvar *recent-changes-list* (list))
 ;;; date title user description
 
-#|
-(setf *recent-changes-list*
-      (list
-       (list (- (get-universal-time) 100) "A Page" "anon" "some change")
-       (list (- (get-universal-time) 200) "A Pa2ge" "anon" "some change")
-       (list (- (get-universal-time) 300) "A Pa3ge" "anon" "some change")
-       (list (- (get-universal-time) 400) "A Pa4ge" "anon" "some change")
-       (list (- (get-universal-time) 500) "A Pa5ge" "anon" "some change")
-       (list (- (get-universal-time) 500) "A Pa6ge" "anon" "some change")
-       (list (- (get-universal-time) 600) "A Pa7ge" "anon" "some change")
-       (list (- (get-universal-time) 700) "A Pa8ge" "anon" "some change")
-       (list (- (get-universal-time) 100000) "A Pa8ge" "anon" "some change")
-       (list (- (get-universal-time) 102000) "A Pa8ge" "anon" "some change")
-       (list (- (get-universal-time) 105000) "A Pa8ge" "anon" "some change")))
-|#       
-
 (defun restore-recent-changes (root &optional max-entries)
   (with-open-file (in (merge-pathnames "admin/recent-changes.dat" root)
 		      :direction :input)
@@ -31,11 +15,17 @@
 
 (defun add-recent-change (root date title user &optional description)
   (let ((entry (list date title user description)))
-    (push entry *recent-changes-list*)
-    (with-open-file (out (merge-pathnames #p"admin/recent-changes.dat" root)
-                         :direction :output :if-exists :append
-                         :if-does-not-exist :create)
-      (print entry out))))
+    ;; if the description is "?" and the preceding recent changes
+    ;; entry for the same title has the same user name, don't add this one
+    (let ((preceding (find-if (lambda (x) (string= (second x) title))
+			      *recent-changes-list*)))
+      (unless (and (string= description "")
+		   (string= (third preceding) user))
+	(push entry *recent-changes-list*)
+	(with-open-file (out (merge-pathnames #p"admin/recent-changes.dat" root)
+			     :direction :output :if-exists :append
+			     :if-does-not-exist :create)
+	    (print entry out))))))
 
 (defun most-recent-change (title)
   (find title *recent-changes-list* :key #'second :test #'equal))
