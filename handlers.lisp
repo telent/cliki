@@ -15,7 +15,6 @@ body
   background: white;
   color: black;
   font-family: serif;
-  font-size: 13px;
   margin: 0; padding: 0.5em;
 }
 
@@ -143,20 +142,20 @@ pre
 		      (cliki-pages cliki)
 		      collect p)))
     (request-send-headers request)
-    (write-sequence
-     (html
-      `(html
-        (head (title "Cliki: All pages"))
-        (body
-         (h1 "All pages")
-         (ul
-          ,@(mapcar
-             (lambda (x)
-               `(li ((a :href
-		      ,(urlstring (page-url cliki x)))
-                     ,(page-title x))))
-	     pages)))))
-     (request-stream request))))
+    (html-stream
+     (request-stream request)
+     `(html
+       (head (title "Cliki: All pages"))
+       (body
+	(h1 "All pages")
+	(ul
+	 ,(lambda (stream)
+		  (dolist (x pages)
+		    (html-stream 
+		     stream
+		     `(li ((a :href
+			      ,(urlstring (page-url cliki x)))
+			   ,(page-title x))))))))))))
 
 (defun search-pages (cliki term)
   (when term
