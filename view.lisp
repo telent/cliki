@@ -37,7 +37,7 @@
 			 ((a :href ,(ahref "Recent%20Changes")) "Recent Changes")
                          ((a :href ,(ahref "CLiki")) "About CLiki")
                          ((a :href ,(ahref "Text%20Formatting")) "Text Formatting")
-                         ((a :onclick ,(format nil "if(name=window.prompt('New page name ([A-Za-z0-9 ])')) document.location='~a'+name ;return false;" (urlstrin (merge-url home "edit/" ))) :href "#" )
+                         ((a :onclick ,(format nil "if(name=window.prompt('New page name ([A-Za-z0-9 ])')) document.location='~a'+name ;return false;" (urlstring (merge-url home "edit/" ))) :href "#" )
                           "Create New Page")))
 
                        (h1 ,title)
