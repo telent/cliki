@@ -15,7 +15,7 @@
 	   
   (:import-from #+sbcl "SB-GRAY" #+cmu "EXT"
                 "FUNDAMENTAL-CHARACTER-OUTPUT-STREAM")
-  (:use "NET.TELENT.DATE" "COMMON-LISP" "SB-GRAY" "ARANEIDA" "SOCKETS"))
+  (:use "NET.TELENT.DATE" "COMMON-LISP" "SB-GRAY" "ARANEIDA" "SB-BSD-SOCKETS"))
 
 ;;; language for inline searches and stuff
 (defpackage "CLIKI-PAGES" (:use #| nil |# ))
