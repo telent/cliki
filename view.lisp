@@ -24,8 +24,6 @@
                         ((div :id "navbar")
                          ((a :href ,(ahref "/")) "Home")
 			 ((a :href ,(ahref "Recent%20Changes")) "Recent Changes")
-                         ;((a :href ,(ahref (format nil "edit/~A "title))) "edit this page")
-                         ;((a :href ,(ahref (format nil "~A?source" title))) "view source")
                          ((a :href ,(ahref "CLiki")) "About CLiki")
                          ((a :href ,(ahref "Text%20Formatting")) "Text Formatting")
                          ((a :onclick ,(format nil "if(name=window.prompt('New page name ([A-Za-z0-9 ])')) document.location='~A/edit/'+name ;return false;" title) :href "#")
@@ -33,6 +31,8 @@
 
                        (h1 ,title)
                        (deleteme))))))
+	      (format stream
+		      "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">~%")
               (write-sequence
                (subseq out 0 (search "<DELETEME>" out))
                stream)))))
@@ -50,12 +50,12 @@
 		       (file-write-date (page-pathname page)))
 		      "(none)"))))
     (html-stream out
-		 `((div :id "footer")
-		   ((form  :action "/admin/search")
+		 `((form  :action "/admin/search")
+		   ((div :id "footer")
 		    ,text
 		    ((input :name "words" :size "30"))
 		    ((input :type "submit" :value "search")))))
-    (format out "</div><p>CLiki pages can be edited by anyone at any time.  Imagine a fearsomely comprehensive disclaimer of liability.  Now fear, comprehensively")))
+    (format out "<p>CLiki pages can be edited by anyone at any time.  Imagine a fearsomely comprehensive disclaimer of liability.  Now fear, comprehensively")))
 
 (defun print-page-selector
     (stream start-of-page number-on-page total-length urlstring-stub)
@@ -122,8 +122,6 @@
     (cliki-page-header cliki request title)
     (if page
 	(progn
-	  ;; we could remove the current page from the topic/links
-	  ;; here.  that might be a good idea
 	  (let* ((topics (remove page (page-topics page)))
 		 (backlinks
 		  (sort (set-difference
@@ -132,12 +130,12 @@
 			#'string-lessp :key #'page-title)))
 	    (write-page-contents-to-stream cliki page out)
 	    (when topics
-	      (format out "<hr><b>Page~p in this topic: </b> " (length topics))
+	      (format out "<hr><p><b>Page~p in this topic: </b> " (length topics))
 	      (dolist (c topics)
 		(format out "~A &nbsp; "
 			(write-a-href cliki (page-title c) nil))))
 	    (when backlinks
-	      (format out "<hr><b>~A linked from: </b> "
+	      (format out "<hr><p><b>~A linked from: </b> "
 		      (if topics "Also" "This page is")
 		      (length backlinks))
 	      (dolist (c backlinks)
