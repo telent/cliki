@@ -1,41 +1,35 @@
 (in-package :cliki)
 
-(defun cliki-html::titlebar (stream format-arg colon-p at-p &rest params)
-  "Print a string of HTML that gets inserted at the top of each page.
-You could put your company logo here, or something like that.  This is
-intended for use as a FORMAT Tilde-slash function"
-  (declare (ignore colon-p at-p params))
-  (let* ((here (request-url format-arg))
-         (home (cliki-url-root (request-cliki format-arg))))
+;;; this becomes a method so that we can change the look and feel for
+;;; different clikis in the same image
+(defmethod cliki-page-header ((cliki cliki-instance) request title &optional head)
+  (let* ((stream (request-stream request))
+         (home (cliki-url-root (request-cliki request))))
     (labels ((ahref (l) (urlstring (araneida:merge-url home l)))) 
       (write-sequence
        (html
-	`(p
-	  ((table :width "100%")
-	   (tr
-	    (td ((a :href ,(urlstring home))
-		 ((img :border 0 :src "/cliki.png" :alt "[ Home ]"))))
-	    ((td :colspan 3) "CLiki pages can be edited by anybody at any time.  Imagine a <i>scarily comprehensive legal disclaimer</i>.  Double it.  Add two.  <!-- Now shut your eyes.  Dark, isn't it? -->")))
-	  (center
-	   (table
+	`(html
+	  (head (title ,(format nil "CLiki : ~A" title))
+	   ,@head
+	   ((link :rel "stylesheet" :href
+		  ,(urlstring (merge-url (cliki-url-root cliki)
+					 "admin/cliki.css")))))
+	  (body
+	   ((table :width "100%")
 	    (tr
+	     (td ((a :href ,(urlstring home))
+		  ((img :border 0 :src "/cliki.png" :alt "[ Home ]"))))
+	     ((td :colspan 3) "CLiki pages can be edited by anybody at any time.  Imagine a <i>scarily comprehensive legal disclaimer</i>.  Double it.  Add two.  <!-- Now shut your eyes.  Dark, isn't it? -->")))
+	   (center
+	    (table
+	     (tr
 	     (td ((a :href ,(ahref "#")) "[ Home ]"))
 	     (td ((a :href ,(ahref "Recent%20Changes")) "[ Recent Changes ]"))
 	     (td ((a :href ,(ahref "CLiki")) "[ About CLiki ]"))
 	     (td ((a :href ,(ahref "Text%20Formatting")) "[ Text Formatting ]")))
-	    ))
-	  (hr)))
+	     ))
+	   (hr))))
        stream))))
-
-(defun send-cliki-page-preamble (request title &optional (head ""))
-  (let ((out (request-stream request)))
-    (format out "<html><head><title>Cliki : ~A</title>~A</head>
-<link rel=\"stylesheet\" href=\"~Aadmin/cliki.css\">
-<body>
-~/cliki-html:titlebar/
-<h1>~A</h1>~%"
-	    title head (urlstring (cliki-url-root (request-cliki request)))
-	    request title)))
 
 (defun print-page-selector
     (stream start-of-page number-on-page total-length urlstring-stub)
@@ -62,7 +56,7 @@ intended for use as a FORMAT Tilde-slash function"
   (let* ((out (request-stream request))
 	 (cliki (request-cliki request)))
     (request-send-headers request)
-    (send-cliki-page-preamble request title)
+    (cliki-page-header cliki request title)
     (if page
 	(handler-case
 	    (let* ((categories (page-categories page))

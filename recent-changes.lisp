@@ -43,7 +43,7 @@
 	   :junk-allowed t))
 	 (number 30))
     (request-send-headers request)
-    (send-cliki-page-preamble request "Recent Changes")
+    (cliki-page-header cliki request "Recent Changes")
     (if (= start 0)
 	(format out
 		"<blockquote>This page is now updated automatically.  Look out for RSS exports in the near future too. -- ~A"
