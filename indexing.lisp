@@ -46,6 +46,7 @@
 
 (defvar *last-directory* nil)
 (defvar *last-directory-time* 0)
+
 (defun files-in-directory (pathname)
   (let* ((directory 
 	  (if (wild-pathname-p pathname)
@@ -57,7 +58,9 @@
 	    *last-directory*
 	    (remove-if-not #'pathname-name
 			   #+cmu18c (directory directory :check-for-subdirs nil :truenamep nil)
-			   #-cmu18c (directory directory :check-for-subdirs t))))
+			   #+sbcl (directory directory)
+			   #-(or sbcl cmu18c)
+			   (directory directory :check-for-subdirs t))))
     *last-directory*))
 
 (defun update-indexes-for-page (title root
@@ -77,9 +80,3 @@
           else do (remove-link-from-hashtable *backlinks* k title))))
 
     
-#|
-(with-input-from-string (i " one of _(these) and *(two) of *(those) ")
-  (grep-stream-for-links i '(#\_ #\*)))
-
-(create-indexes "/var/www/cliki/")
-|#
