@@ -7,7 +7,8 @@
       (nstring-downcase (substitute #\Space #\_ title))))
 
 (defmethod find-page ((cliki cliki-view) title)
-  (gethash (or (canonise-title title) (cliki-default-page-name cliki))
+  (gethash (or (canonise-title title)
+	       (string-downcase (cliki-default-page-name cliki)))
 	   (cliki-pages cliki)))
 
 (defun name-for-url (url)
