@@ -17,10 +17,11 @@
 	 (changes (cliki-recent-changes cliki))
 	 (preceding (find-if (lambda (x) (string= (second x) title))
 			     changes)))
-    ;; if the description is empty and the preceding recent changes
+    ;; if the description is empty and a recent preceding recent changes
     ;; entry for the same title has the same user name, don't add this one
     (unless (and (string= description "")
-		 (string= (third preceding) user))
+		 (string= (third preceding) user)
+		 (> (+ (first preceding) 600) (get-universal-time)))
       (push entry (cliki-recent-changes cliki))
       (with-open-file (out (merge-pathnames #p"admin/recent-changes.dat"
 					    (cliki-data-directory cliki))
