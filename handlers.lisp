@@ -1,19 +1,22 @@
 (in-package :cliki)
 
-(defun request-title (request root)
+(defun find-page-name (title root)
   (labels ((match-p (a b)
                     (string-equal (substitute #\_ #\Space a)
                                   (substitute #\_ #\Space b))))
-    (let* ((string (urlstring-unescape (request-path-info request)))
-           (pos (position #\/ string :from-end t))
-           (search-string (subseq string (if pos (1+ pos) 0)))
-           (candidates (mapcar #'pathname-name (directory root)))
-           (actual (find search-string candidates :test #'match-p)))
-      (when (string= search-string actual)
-        (return-from request-title actual))
-      (request-redirect request
-                        (merge-url (request-url request) (urlstring-escape actual)))
-      nil)))
+    (let* ((candidates (mapcar #'pathname-name (directory root))))
+      (find title candidates :test #'match-p))))
+
+(defun request-title (request root)
+  (let* ((string (urlstring-unescape (request-path-info request)))
+         (pos (position #\/ string :from-end t))
+         (search-string (subseq string (if pos (1+ pos) 0)))
+         (actual (find-page-name search-string root)))
+    (when (string= search-string actual)
+      (return-from request-title actual))
+    (request-redirect request
+                      (merge-url (request-url request) (urlstring-escape actual)))
+    nil))
 
 (defun cliki-get-handler (request arg-string root)
   (let ((title (request-title request root)))
