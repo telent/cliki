@@ -7,3 +7,5 @@
 ;;; EQUAL hash table would be nice.
 (defpackage "CLIKI-PAGES")
 
+;;; used for collection of markup routines
+(defpackage "CLIKI-HTML")
