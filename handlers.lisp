@@ -69,7 +69,10 @@ A.hyperspec { color: #442266 }
 	
 	(format out "<form action=\"~Aadmin/search\"> Search again: <input name=words size=60 value=~S></form>"
 		(urlstring (cliki-url-root cliki))
-		(html-escape (if error term (prin1-to-string c-term))))
+		(html-escape
+		 (cond (error term)
+		       ((eql (car c-term) :body) (cadr c-term))
+		       (t (prin1-to-string c-term)))))
 	(cond
 	  (error
 	   (format out "Sorry, your search term could not be read<pre>~A</pre>" (html-escape (princ-to-string error))))
@@ -91,7 +94,8 @@ A.hyperspec { color: #442266 }
 	    (request-stream request) start 10 (length results)
 	    (format nil "~A?words=~A&start="
 		    (url-path url)
-		    (urlstring-escape (princ-to-string c-term)))))
+		    (urlstring-escape
+		     (format nil "~S" c-term)))))
 	  (t (format out "Sorry, no pages match your search term.")))
 	t))))
 
