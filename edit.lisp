@@ -41,7 +41,8 @@
      (:no-error (c)
                 (declare (ignorable c))
                 (request-send-headers request)
-                (format out "Thanks for editing ~A.  Don't forget to update the <a href=\"Recent+Changes\">Recent Changes</a> page to describe what you did.  Oh, and you probably need to `reload' or `refresh' to see your changes take effect" view-href)))))
+                (format out "Thanks for editing ~A.  Don't forget to update the <a href=\"Recent+Changes\">Recent Changes</a> page to describe what you did.  Oh, and you probably need to `reload' or `refresh' to see your changes take effect" view-href)))
+    (update-indexes-for-page title root)))
 
 
 
