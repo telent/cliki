@@ -39,7 +39,7 @@
 	       (:file "strip-html-stream" :depends-on ("buffered-output-stream"))
                (:file "search" :depends-on ("index" "elided-stream" "strip-html-stream"))
                (:file "handlers" :depends-on
-                      ("view" "index" "view-source" "edit" "search"))
+                      ("view" "index" "view-source" "search"))
 	       (:static-file "TODO")
 	       (:static-file "make-TODO" :pathname "make-TODO.pl")
 	       (:static-file "NEWS")
