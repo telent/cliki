@@ -29,11 +29,16 @@
 			   :if-does-not-exist :create)
 	  (with-standard-io-syntax (print entry out))))))
 
+(defun find-recent-change (cliki title)
+  (loop for entry in (cliki-recent-changes cliki)
+	for (date title- user description) = entry
+	when (string-equal title title-) 
+	return entry))
+
 (defun same-day-p (date1 date2)
   (= (floor date1 86400) (floor date2 86400)))
 
 (defun view-recent-changes (request)
-  (declare (ignore rest-of-url))
   (let* ((out  (request-stream request))
 	 (cliki (request-cliki request))
 	 (changes (cliki-recent-changes cliki))
@@ -46,7 +51,7 @@
     (with-page-surround (cliki request "Recent Changes")
       (if (= start 0)
 	  (format out
-		  "<blockquote>This page is updated automatically.  There's also an <a href=\"recent-changes.rdf\">RSS 0.91</a> RDF feed"
+		  "<blockquote>This page is updated automatically.  There's also an <a href=\"~A\">RSS 0.91</a> RDF feed"
 		  (urlstring
 		   (merge-url (request-url request) "recent-changes.rdf")))
 	  (format out "<p>Older entries (starting at ~D)</p>~%" start))
@@ -66,9 +71,9 @@
 	    do (with-date this-date 0
 			  (format out "<br> ~D:~2,'0D <b>~A</b> : ~A -- ~A ~%"
 				  hour minute
-				  (if title (write-a-href cliki title nil) "?")
+				  (write-a-href cliki title nil)
 				  (car description)
-				  (if user (write-a-href cliki user nil) ""))))
+				  (write-a-href cliki user nil))))
       (princ "</blockquote><p>" out)
       (print-page-selector out start number (length changes)
 			   (format nil "~A?start="
@@ -128,7 +133,8 @@
 	 (cliki (request-cliki request))
 	 (changes (cliki-recent-changes cliki)))
     (request-send-headers request :content-type "text/xml"
-			  ;:conditional t
+			  :conditional t
+			  :expires (+ (get-universal-time) 300)
 			  :last-modified (caar changes))
     (rss-recent-changes-stream cliki out)))
 
