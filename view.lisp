@@ -60,7 +60,7 @@ intended for use as a FORMAT Tilde-slash function"
     (format out "<hr><form action=\"http://loaclhost.telent.net/cgi-bin/htsearch\"><a href=\"~A?edit\">Edit this page</a> | <a href=\"~A?source\">View page source</a> |  Last edit: ~A | <a href=\"CLiki+Search\" Search CLiki</a> <input name=words size=20></form>"
             (urlstring-escape title) (urlstring-escape title)
             (araneida::aif (file-write-date pathname)
-                 (araneida::universal-time-to-rfc-date araneida::it)
+			   (date::universal-time-to-rfc-date araneida::it)
                  "(none)")
             )))
 
