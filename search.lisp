@@ -40,7 +40,7 @@
 					(princ-to-string y)))))
 	 (t (assoc term (page-indices page))))
    1 0))
-  
+
 
 
 
@@ -58,8 +58,9 @@
 ;;; TODO syntax errors and so forth should throw something
 ;;; standardised which write-stream-to-stream can catch (so fix search-error)
 
-(defun search-pages (cliki term &key (attribute :body) (match :substring)
-                          (case-sensitive nil))
+(defun legacy-search-pages
+    (cliki term &key (attribute :body) (match :substring)
+     (case-sensitive nil))
   "Search pages in PATHNAME for TERM according to the criteria in the keyword
 arguments.  Returns a list of page titles.
 ATTRIBUTE is (or :title :topic :body)
