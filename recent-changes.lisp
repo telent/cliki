@@ -106,6 +106,7 @@
 						   (urlstring-escape title)))
 		   collect `("item" () 
 				    ("title" () ,f-date " : " ,title" : " ,descr)
+				    ("pubDate" () ,(date:universal-time-to-http-date date))
 				    ("link" ()  ,url)))))
 	(format stream "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>~%")
 	(xmls:write-xml
