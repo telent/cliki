@@ -1,3 +1,31 @@
+New in CLiki 0.3.9
+
+* Wholesale changes to take advantage of the new handler model in
+  Araneida 0.69+ (i.e. you need that too)
+
+* Potentially backward-incompatible change: now redirects requests
+  for the foo.html url to the foo page.  This has been threatened 
+  for years
+
+* Default search result page gets a summary of matched text for each
+  matching document
+
+* CLIKI-DEFAULT-PAGE-NAME method lets you have a start page called something
+  other than `index'
+
+* ADD-TO-INDEX-FOR-PAGE methods can now also add their arguments to the 
+  TF index, so that text in :(foo ...) constructs can be picked up in
+  full-text searching 
+
+* recent changes is now always displayed in GMT
+
+* Javascript link in default page header method to create new page
+
+* Removed (in hindsight, silly) >(foo) download syntax
+
+* Targets for 0.4: perhaps some documentation.  Lift the user auth from 
+  Entomotomy and include it here.  Bug fixes (please report bugs)
+
 
 New in CLiki 0.3.3
 

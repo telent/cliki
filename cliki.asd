@@ -4,7 +4,7 @@
 
 (defsystem cliki
   :depends-on (ARANEIDA net-telent-date)
-  :version "0.3.3"
+  :version "0.3.9"
   :components ((:file "defpackage")               
 	       (:file "cliki-instance-class" :depends-on ("defpackage"))
 	       (:file "cliki-instance" :depends-on ("cliki-instance-class"))
