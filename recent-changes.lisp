@@ -84,9 +84,6 @@
 	 (changes (cliki-recent-changes cliki)))
     (request-send-headers request :content-type "text/xml")
     (format out "<?xml version=\"1.0\"?>
-<!DOCTYPE rss PUBLIC \"-//Netscape Communications//DTD RSS 0.91//EN\"
-            \"http://my.netscape.com/publish/formats/rss-0.91.dtd\">
-
 <rss version=\"0.92\">
   <channel>
     <title>~A Recent Changes</title>
