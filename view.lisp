@@ -65,7 +65,12 @@
 		    ,text
 		    ((input :name "words" :size "30"))
 		    ((input :type "submit" :value "search")))))
-    (format out "<p>CLiki pages can be edited by anyone at any time.  Imagine a fearsomely comprehensive disclaimer of liability.  Now fear, comprehensively")))
+    (format out "<p>CLiki pages can be edited by anyone at any time.  Imagine a fearsomely comprehensive disclaimer of liability.  Now fear, comprehensively")
+    ;; One day I will separate cliki-the-app from cliki-the-website, I promise
+    ;; In the meantime, you probably don't want this message
+    #+nil
+    (format out "<P>To help defray the expenses of running CLiki, and fund the development of more free CL stuff, you can now <a href=\"https://www.paypal.com/xclick/business=dan%40telent.net&no_note=1&tax=0&currency_code=USD\">Donate via PayPal</a> to <a href=\"Daniel+Barlow\">dan@telent.net</a>.  If you like.")))
+
 
 (defun print-page-selector
     (stream start-of-page number-on-page total-length urlstring-stub)
@@ -156,7 +161,8 @@
   t)
 
 
-(defgeneric html-for-keyword (cliki stream keyword &rest rest &key &allow-other-keys))
+(defgeneric html-for-keyword (cliki stream keyword &rest rest))
+
 (defmethod html-for-keyword ((cliki cliki-view)
 			     stream (keyword t) &rest args)
   (format stream "<b> [unrecognised ~A keyword occurred here: args ~S] </b>"
