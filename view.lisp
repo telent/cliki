@@ -62,6 +62,42 @@
 	  (url "Next" (+ first-on-screen number-on-page)))
       (princ "</tr></table></center>" stream))))
 
+
+(defun long-form-for (token arg)
+  (let ((*read-eval* nil)
+	(*package* (find-package "KEYWORD")))
+    (if (eq token :long-form)
+	(read-from-string arg)
+	(list (intern (string-upcase token) :keyword)
+	      (strip-outer-parens arg)))))
+
+(defun write-page-contents-to-stream (cliki page out-stream)
+  "Read the file for PAGE and write to OUT-STREAM, substituting weird markup language elements as we go. "  
+  (let ((newlines 0)
+        (returns 0))
+    (labels ((dispatch (token arg)
+	       (apply #'html-for-keyword
+		      cliki out-stream (long-form-for token arg)))
+	     (output (c)
+	       (cond
+		 ((and (or (> newlines 1) (> returns 1))
+		       (member c '(#\Newline #\Return)))
+		  (write-sequence "<p>" out-stream)
+		  (setf newlines 0 returns 0))
+		 ((eql c #\Newline)
+		  (incf newlines)
+		  (write-char c out-stream))
+		 ((eql c #\Return)
+		  (incf returns)
+		  (write-char c out-stream))
+		 (t
+		  (setf newlines 0 returns 0)
+		  (write-char c out-stream)))))
+      (with-open-file (in-stream (page-pathname page) :direction :input)
+	(scan-stream (cliki-short-forms cliki)
+		     in-stream
+		     #'output #'dispatch)))))
+
 (defun view-page (request page title)
   (let* ((out (request-stream request))
 	 (cliki (request-cliki request)))
@@ -69,20 +105,21 @@
     (cliki-page-header cliki request title)
     (if page
 	(handler-case
-	    (let* ((categories (page-categories page))
+	    ;; we could remove the current page from the topic/links
+	    ;; here.  that might be a good idea
+	    (let* ((topics (page-topics page))
 		   (backlinks
-		    (sort (set-difference (page-backlinks page) categories)
+		    (sort (set-difference (page-backlinks page) topics)
 			  #'string-lessp :key #'page-title)))
-	      (with-open-file (in (page-pathname page) :direction :input)
-		  (write-stream-to-stream cliki in out))
-	      (when categories
-		(format out "<hr><b>Page~p in this topic: </b> " (length categories))
-		(dolist (c categories)
+	      (write-page-contents-to-stream cliki page out)
+	      (when topics
+		(format out "<hr><b>Page~p in this topic: </b> " (length topics))
+		(dolist (c topics)
 		  (format out "~A &nbsp; "
 			  (write-a-href cliki (page-title c) nil))))
 	      (when backlinks
 		(format out "<hr><b>~A linked from: </b> "
-			(if categories "Also" "This page is")
+			(if topics "Also" "This page is")
 			(length backlinks))
 		(dolist (c backlinks)
 		  (format out "~A &nbsp; "
@@ -102,83 +139,42 @@
             )))
 
 
-(defun write-stream-to-stream (cliki in-stream out-stream)
-  "Read from IN-STREAM and write to OUT-STREAM, substituting weird markup language elements as we go. "  
-  (let ((newlines 0)
-        (returns 0)
-	(eof (gensym "EOF"))
-	(buffer))
-    (labels ((dispatch (token arg)
-	       (let ((*read-eval* nil)
-		     (*package* (find-package "KEYWORD")))
-		 (if (eq token :long-form) 
-		     (apply #'html-for-keyword cliki (read-from-string arg))
-		     (html-for-keyword 
-		      cliki (intern (string-upcase token) :keyword)
-		      (strip-outer-parens arg)))))
-	     (scan ()
-	       (handler-case
-		   (scan-stream (cliki-short-forms cliki)
-				in-stream #'dispatch)
-		 (end-of-file (eof-c) (list eof))))       	       
-	     (more-buffer ()
-	       (setf buffer (nconc buffer (scan))))
-	     (peekc ()
-	       (unless buffer (more-buffer))
-	       (car buffer))
-	     (readc ()
-	       (unless buffer (more-buffer))
-	       (prog1 (car buffer)
-		 (setf buffer (cdr buffer)))))
-      (do ((c (readc)  (readc))
-	   (c1 (peekc) (peekc)))
-	  ((eq c eof) nil)
-	(cond
-	  ((stringp c) (write-sequence c out-stream))
-	  ((and (member c '(#\Newline #\Return))
-		(not (member c1 '(#\Newline #\Return))))
-	   (if (or (> newlines 1) (> returns 1))
-	       (unless (eql c1 #\<)
-		 (write-sequence "<p>" out-stream)))
-	   (setf newlines 0 returns 0))
-	  ((eql c #\Newline)
-	   (incf newlines)
-	   (write-char c out-stream))
-	  ((eql c #\Return)
-	   (incf returns)
-	   (write-char c out-stream))
-	  (t (write-char c out-stream)))))))
-
-(defgeneric html-for-keyword (cliki keyword &rest rest &key &allow-other-keys))
+(defgeneric html-for-keyword (cliki stream keyword &rest rest &key &allow-other-keys))
 (defmethod html-for-keyword ((cliki cliki-instance)
-			     (keyword t) &rest args)
-  (format nil "<b> [unrecognised ~A keyword occurred here: args ~S] </b>"
+			     stream (keyword t) &rest args)
+  (format stream "<b> [unrecognised ~A keyword occurred here: args ~S] </b>"
 	  keyword args))
 
-(defmethod html-for-keyword ((cliki cliki-instance) (keyword (eql :topic))
+(defmethod html-for-keyword ((cliki cliki-instance) stream
+			     (keyword (eql :topic))
 			     &rest args &aux (arg (car args)))
-  (write-a-href cliki arg nil))
+  (write-a-href cliki arg stream))
 
-(defmethod html-for-keyword ((cliki cliki-instance) (keyword (eql :link))
+(defmethod html-for-keyword ((cliki cliki-instance) stream
+			     (keyword (eql :link))
 			     &rest args &aux (arg (car args)))
-  (write-a-href cliki arg nil))
+  (write-a-href cliki arg stream))
 
-(defmethod html-for-keyword ((cliki cliki-instance) (keyword (eql :search))
+(defmethod html-for-keyword ((cliki cliki-instance) stream
+			     (keyword (eql :search))
 			     &rest args &aux (arg (car args)))
-  (legacy-search-result cliki arg nil))
+  (legacy-search-result cliki arg stream))
 
-(defmethod html-for-keyword ((cliki cliki-instance) (keyword (eql :clhs))
+(defmethod html-for-keyword ((cliki cliki-instance) stream
+			     (keyword (eql :clhs))
 			     &rest args &aux (arg (car args)))
   (let* ((url (hyperspec-url arg)))
     (if url
-	(format nil
+	(format stream
 		"<a class=\"hyperspec\" href = \"~a\"><b>~a</b></a>"
 		url arg)
-	arg)))
+	(princ arg stream))))
 
-(defmethod html-for-keyword ((cliki cliki-instance) (keyword (eql :download))
+(defmethod html-for-keyword ((cliki cliki-instance) stream
+			     (keyword (eql :download))
 			     &rest args &aux (arg (car args)))
-  (format nil "<a class=\"download\" href=\"~A\"><b>Download from ~A</b></a>"
+  (format stream
+	  "<a class=\"download\" href=\"~A\"><b>Download from ~A</b></a>"
 	  arg arg))
 
 
