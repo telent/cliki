@@ -6,7 +6,7 @@ You could put your company logo here, or something like that.  This is
 intended for use as a FORMAT Tilde-slash function"
   (declare (ignore colon-p at-p params))
   (let* ((here (request-url format-arg))
-         (home (merge-url here "index")))
+         (home (cliki-request-url-root format-arg)))
     (write-sequence
      (html
       `((table :width "100%")
