@@ -7,11 +7,7 @@
       (funcall function (request-stream request))
     (cliki-page-footer cliki request title)))
 
-(defmacro with-page-surround ((cliki request title &optional head) &body forms)
-  `(cliki-page-surround ,cliki ,request
-			(lambda (out) ,@forms)
-			:title ,title :head ,head))
-  
+ 
 (defmethod cliki-page-header ((cliki cliki-view) request title &optional head)
   (let* ((stream (request-stream request))
          (home (cliki-url-root cliki)))
@@ -167,7 +163,7 @@
 
 (defun view-page (cliki request page title &key (version :newest))
   (let* ((pathname (if page (page-pathname page :version version)))
-	 (lmtime (file-write-date pathname)))
+	 (lmtime (if page (file-write-date pathname) (get-universal-time))))
     (request-send-headers request :conditional t 
 			  :last-modified lmtime)
     (with-page-surround (cliki request title)
@@ -323,6 +319,7 @@
        (subseq string 1 (- (length string) 1))))
 
 
+(defgeneric write-a-href (cliki-view title stream))
 (defmethod write-a-href ((cliki cliki-view) title stream)
   "Write an A HREF element for the CLiki page TITLE.  STREAM may be an open stream or T or NIL, a la FORMAT"
   (let ((escaped (urlstring-escape title)))
