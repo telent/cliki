@@ -3,7 +3,8 @@
 (defun canonise-title (title)
   "Return the key for the pages hash for the document with title TITLE"
   (string-downcase  
-   (substitute #\Space #\_ (urlstring-unescape title))))
+   (substitute #\Space #\_
+	       (urlstring-unescape (remove #\% title)))))
 
 (defmethod find-page ((cliki cliki-instance) title)
   (gethash (canonise-title title) (cliki-pages cliki)))
