@@ -101,6 +101,7 @@
 		   collect `("item" () 
 				    ("title" () ,f-date " : " ,title" : " ,descr)
 				    ("link" ()  ,url)))))
+	(format stream "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>~%")
 	(xmls:write-xml
 	 `("rss" (("version" "0.92"))
 		 ("channel"
