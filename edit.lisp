@@ -6,9 +6,7 @@
   (let* ((out (request-stream request))
 	 (cookie (request-cookie request "username"))
 	 (username (and cookie
-			(let ((p (position #\= cookie)))
-			  (and p
-			       (string-trim "\"" (subseq cookie (1+ p))))))))
+			(urlstring-unescape cookie))))
     (if (< (length username) 1) (setf username nil))
     (request-send-headers request
 			  :expires (get-universal-time)
@@ -63,8 +61,8 @@
                             (request-path-info request) title)))
     (if (body-param "rememberme" body)
 	(setf cookie
-	      (format nil "username=~s; path=~A; expires=~A; domain=~A"
-		      (body-param "name" body)
+	      (format nil "username=~A; path=~A; expires=~A; domain=~A"
+		      (urlstring-escape (body-param "name" body))
 		      (url-path (cliki-url-root cliki))
 		      "Sun, 01-Jun-2036 00:00:01 GMT"
 		      (url-host (cliki-url-root cliki)))))
@@ -74,7 +72,7 @@
 	;; cookie previously set; seems reasonable that unticking the box
 	;; should be interpreted as a request to clear it
 	(setf cookie
-	      (format nil "username=\"\"; path=~A; expires=~A; domain=~A"
+	      (format nil "username=; path=~A; expires=~A; domain=~A"
 		      (url-path (cliki-url-root cliki))
 		      "Mon, 32-Jul-2001 00:00:01 GMT"
 		      (url-host (cliki-url-root cliki)))))
