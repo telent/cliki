@@ -119,7 +119,10 @@ Describe _(~A) here
 	    when (typep el 'string)
 	    do (write-sequence el out-file)))))
 
-  
+(defun filename-for-title (cliki title)
+  ;; XXX should generate a guaranteed unique filename (and still
+  ;; preferably one that is vaguely like the page title)
+  (remove #\. title))
 
 (defun save-page (cliki request page)
   (let* ((filename (page-pathname page))

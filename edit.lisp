@@ -35,10 +35,7 @@
 	    (or username "A N Other")
 	    (if username "checked=checked" ""))))
 
-(defun filename-for-title (cliki title)
-  ;; XXX should generate a guaranteed unique filename (and still
-  ;; preferably one that is vaguely like the page title)
-  (remove #\. title))
+
 
 
 
