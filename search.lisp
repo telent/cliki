@@ -146,13 +146,11 @@ CASE-SENSITIVE is (or t nil)"
 
 (defun search-page-topics (cliki term match case-sensitive)
   (let ((pred (search-predicate match case-sensitive)))
-    ;; find all pages that have "term" in their name
-    ;; display their combined topics lists
     (remove-duplicates
      (sort 
       (loop for page being the hash-values of (cliki-pages cliki)
-	    if (member term (page-names page) :test pred)
-	    append (page-topics page))
+	    if (member term (page-index page :topic) :test pred :key #'car)
+	    collect page)
       #'string-lessp
       :key #'page-title))))
 
