@@ -45,7 +45,7 @@
 	 (catch 'matched
 	   (dolist (i (find-token chars stream dispatch))
 	     (funcall output i))))
-      (end-of-file (c) (declare (ignore c)) nil))))))))
+      (end-of-file (c) (declare (ignore c)) nil))))
 
 
 
