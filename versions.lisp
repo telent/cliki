@@ -6,6 +6,7 @@
 	  (- (get-universal-time) (* 5 60)))
        (destructuring-bind (date title user- descr)
 	   (find-recent-change  cliki (page-title page))
+	 (declare (ignore date title descr))
 	 (string= user user-))))
 
 (defmethod check-page-save-allowed ((cliki cliki-instance) page version user)
