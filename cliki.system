@@ -6,5 +6,8 @@
   :source-pathname #.(translate-logical-pathname #p"telent:cliki;")
   :components ((:file "defpackage")               
                (:file "view" :depends-on ("defpackage"))
-               (:file "edit" :depends-on ("defpackage"))))
+               (:file "edit" :depends-on ("defpackage"))
+               (:file "page-object" :depends-on ("defpackage"))
+               (:file "handlers" :depends-on ("page-object"))
+               (:file "phtml-page-object" :depends-on ("view" "edit"))))
 
