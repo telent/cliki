@@ -11,4 +11,5 @@
    (tf :accessor page-tf)
    (backlinks :accessor page-backlinks :initform nil)
    (categories :accessor page-categories :initform nil)
+   (download :accessor download-url :initform nil)
    ))
