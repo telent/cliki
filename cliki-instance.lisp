@@ -16,7 +16,20 @@
 ;;; aliases twice
 (defmethod cliki-number-of-documents ((cliki cliki-instance))
   (hash-table-count (cliki-pages cliki)))
-  
+
+(defun update-idf (cliki)
+  "Update idf, using page-tf for each page and summing stuff.  page-tf
+is set by update-page-indices (at startup and after edits).  "
+  (let ((idf (make-hash-table :test 'equal)))
+    (loop for document being the hash-values of (cliki-pages cliki)
+	  do
+	  (let* ((frequencies (page-index document :tf))
+		 (terms (mapcar #'car frequencies)))
+	    (dolist (term terms)
+	      (let ((x (gethash term idf)))
+		(setf (gethash term idf) (1+ (or x 0)))))))
+    (setf (slot-value cliki 'idf) idf)))
+
 (defmethod shared-initialize
     :after ((cliki cliki-instance) slot-names &rest initargs)
   (setf (cliki-data-directory cliki) (pathname (cliki-data-directory cliki)))
@@ -40,7 +53,8 @@
 	(dolist (title titles)
 	  (setf (gethash (canonise-title title) (cliki-pages cliki))
 		p))))
-    (create-indexes cliki)
+    (loop for page being the hash-values of (cliki-pages cliki)
+	  do (update-page-indices cliki page)) 
     (update-idf cliki)
     (restore-recent-changes cliki)
     (export-handler base-url 'cliki-get-handler
