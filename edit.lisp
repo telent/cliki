@@ -10,9 +10,11 @@
 			  (and p
 			       (string-trim "\"" (subseq cookie (1+ p))))))))
     (if (< (length username) 1) (setf username nil))
-    (request-send-headers request :expires (get-universal-time))
-    (send-cliki-page-preamble
-     request (format nil "Edit ``~A''" title)
+    (request-send-headers request
+			  :expires (get-universal-time)
+			  :cache-control "no-cache")
+    (cliki-page-header
+     (request-cliki request) request (format nil "Edit ``~A''" title)
      "<meta name=\"ROBOTS\" content=\"noindex,nofollow\">")
     (format (request-stream request) "
 <form method=post>
