@@ -41,26 +41,36 @@ A.hyperspec { color: #442266 }
 	#'>
 	:key #'cdr))
 
+(defun complex-search-term (term)
+  (cond ((eql (elt term 0) #\()
+	 (let ((*read-eval* nil)
+	       (*package* (find-package :keyword)))
+	   (ignore-errors
+	     (values (read-from-string
+		      (urlstring-unescape term))))))
+	(t `(:body ,term))))
+
 (defun cliki-search-handler (request)
   (let* ((url (request-url request))
 	 (cliki (request-cliki request))
-	 (term (car (url-query-param url  "words")))
-	 (results (search-pages cliki
-				(let ((*read-eval* nil)
-				      (*package* (find-package :keyword)))
-				  (read-from-string
-				   (urlstring-unescape term)))))
-	 (start (parse-integer
-		 (or (car (url-query-param url "start"))
-		     "0") :junk-allowed t))
-	 (end (min (length results) (+ start 10)))
-	 (out (request-stream request)))
-    (request-send-headers request)
-    (cliki-page-header cliki request "Search results")
-
-    (format out "<form action=\"~Aadmin/search\"> Search again: <input name=words size=60 value=~S></form>"
-	    (urlstring (cliki-url-root cliki)) term)
-    (cond (results
+	 (term (car (url-query-param url  "words"))))
+    (multiple-value-bind (c-term error) (complex-search-term term)
+      (let* ((results (unless error (search-pages cliki c-term)))
+	     (start (parse-integer
+		     (or (car (url-query-param url "start"))
+			 "0") :junk-allowed t))
+	     (end (min (length results) (+ start 10)))
+	     (out (request-stream request)))
+	(request-send-headers request)
+	(cliki-page-header cliki request "Search results")
+	
+	(format out "<form action=\"~Aadmin/search\"> Search again: <input name=words size=60 value=~S></form>"
+		(urlstring (cliki-url-root cliki))
+		(html-escape (if error term (prin1-to-string c-term))))
+	(cond
+	  (error
+	   (format out "Sorry, your search term could not be read<pre>~A</pre>" (html-escape (princ-to-string error))))
+	  (results
 	   (format out "<table>")
 	   (loop for (name . rel) in (subseq results start end)
 		 for j from start to end
@@ -74,9 +84,9 @@ A.hyperspec { color: #442266 }
 	    (request-stream request) start 10 (length results)
 	    (format nil "~A?words=~A&start="
 		    (url-path url)
-		    (urlstring-escape term))))
-	  (t (format out "Sorry, no pages match your search term.  Whack fol o diddle i ay")))
-    t))
+		    (urlstring-escape (princ-to-string c-term)))))
+	  (t (format out "Sorry, no pages match your search term.")))
+	t))))
 		     
 
 (defvar   *cliki-instance*)

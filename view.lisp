@@ -80,7 +80,9 @@
   (let ((*read-eval* nil)
 	(*package* (find-package "KEYWORD")))
     (if (eq token :long-form)
-	(read-from-string arg)
+	(multiple-value-bind (r e)
+	    (ignore-errors (values (read-from-string arg)))
+	  (if e (list :error (format nil "~A" e) arg)  r))
 	(list (intern (string-upcase token) :keyword)
 	      (strip-outer-parens arg)))))
 
@@ -147,6 +149,12 @@
 			     stream (keyword t) &rest args)
   (format stream "<b> [unrecognised ~A keyword occurred here: args ~S] </b>"
 	  keyword args))
+
+(defmethod html-for-keyword ((cliki cliki-instance)
+			     stream (keyword (eql :error)) &rest args)
+  (destructuring-bind (error form) args
+    (format stream "<b> [Syntax error in tag: </b><br>~A<pre>~S</pre><b>] </b>"
+	    form (html-escape error))))
 
 (defmethod html-for-keyword ((cliki cliki-instance) stream
 			     (keyword (eql :topic))
