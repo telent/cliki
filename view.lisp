@@ -187,11 +187,13 @@
       (let ((titles
              (search-pages cliki term :attribute attribute :match match  
                            :case-sensitive case-sensitive)))
-	(html
-	 `(ul
-	   ,@(mapcar (lambda (x) `(li ((a :class "internal"
-					:href ,(urlstring-escape x)) ,x)))
-		     titles)))))))
+	(princ
+	 (html
+	  `(ul
+	    ,@(mapcar (lambda (x) `(li ((a :class "internal"
+					 :href ,(urlstring-escape x)) ,x)))
+		      titles)))
+	 stream)))))
 
 (defun strip-outer-parens (string)
   (and (eql (elt string 0) #\()
