@@ -6,30 +6,34 @@
   (let* ((stream (request-stream request))
          (home (cliki-url-root (request-cliki request))))
     (labels ((ahref (l) (urlstring (araneida:merge-url home l)))) 
-      (write-sequence
-       (html
-	`(html
-	  (head (title ,(format nil "CLiki : ~A" title))
-	   ,@head
-	   ((link :rel "stylesheet" :href
-		  ,(urlstring (merge-url (cliki-url-root cliki)
-					 "admin/cliki.css")))))
-	  (body
+      (let ((out
+	     (html
+	      `(html
+		(head (title ,(format nil "CLiki : ~A" title))
+		 ,@head
+		 ((link :rel "stylesheet" :href
+			,(urlstring (merge-url (cliki-url-root cliki)
+					       "admin/cliki.css")))))
+		(body
 	   ((table :width "100%")
 	    (tr
 	     (td ((a :href ,(urlstring home))
 		  ((img :border 0 :src "/cliki.png" :alt "[ Home ]"))))
 	     ((td :colspan 3) "CLiki pages can be edited by anybody at any time.  Imagine a <i>scarily comprehensive legal disclaimer</i>.  Double it.  Add two.  <!-- Now shut your eyes.  Dark, isn't it? -->")))
-	   (center
-	    (table
-	     (tr
-	     (td ((a :href ,(ahref "#")) "[ Home ]"))
-	     (td ((a :href ,(ahref "Recent%20Changes")) "[ Recent Changes ]"))
-	     (td ((a :href ,(ahref "CLiki")) "[ About CLiki ]"))
-	     (td ((a :href ,(ahref "Text%20Formatting")) "[ Text Formatting ]")))
-	     ))
-	   (hr))))
-       stream))))
+		 (center
+		  (table
+		   (tr
+		    (td ((a :href ,(ahref "#")) "[ Home ]"))
+		    (td ((a :href ,(ahref "Recent%20Changes")) "[ Recent Changes ]"))
+		    (td ((a :href ,(ahref "CLiki")) "[ About CLiki ]"))
+		    (td ((a :href ,(ahref "Text%20Formatting")) "[ Text Formatting ]")))
+		   ))
+		 (hr)
+		 (h1 ,title)
+		 (deleteme))))))
+	(write-sequence
+	 (subseq out 0 (search "<DELETEME>" out))
+	 stream)))))
 
 (defun print-page-selector
     (stream start-of-page number-on-page total-length urlstring-stub)
@@ -82,11 +86,12 @@
 		    "Some error occured: <pre>~A</pre>" e)))
 	(format out
 		"This page doesn't exist yet.  Please create it if you want to"))
-    (format out "<hr><form action=\"~Aadmin/search\"><a href=\"~A?edit\">Edit this page</a> | <a href=\"~A?source\">View page source</a> |  Last edit: ~A | <a href=\"CLiki+Search\"> Search CLiki</a> <input name=words size=20></form>"
+    (format out "<hr><form action=\"~Aadmin/search\"><a href=\"~A?edit\">Edit page</a> | <a href=\"~A?source\">View source</a> |  Last edit: ~A | <a href=\"CLiki+Search\"> Search:</a> <input name=words size=20></form>"
 	    (urlstring (cliki-url-root cliki))
             (urlstring-escape title) (urlstring-escape title)
             (if page
-		(file-write-date (page-pathname page))
+		(universal-time-to-rfc-date
+		 (file-write-date (page-pathname page)))
 		"(none)")
             )))
 
