@@ -79,6 +79,10 @@
                   :method :post)
   (export-handler (merge-url base-url "admin/all-pages")
                   (list 'cliki-list-all-pages-handler base-url directory))
+  (export-handler (merge-url base-url "Recent%20Changes")
+                  (list 'view-recent-changes directory))
+  (export-handler (merge-url base-url "Recent+Changes")
+                  (list 'view-recent-changes directory))
   (export-handler base-url (lambda (r rest) (request-redirect r "index"))
                   :method :get :match :exact))
 
