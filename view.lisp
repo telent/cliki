@@ -4,7 +4,7 @@
 ;;; different clikis in the same image
 (defmethod cliki-page-header ((cliki cliki-instance) request title &optional head)
   (let* ((stream (request-stream request))
-         (home (cliki-url-root (request-cliki request))))
+         (home (cliki-url-root cliki)))
     (labels ((ahref (l) (urlstring (araneida:merge-url home l)))) 
       (let ((out
 	     (html
@@ -21,11 +21,11 @@
 			,(urlstring (merge-url (cliki-url-root cliki)
 					       "admin/cliki.css")))))
 		(body
-	   ((table :width "100%")
-	    (tr
-	     (td ((a :href ,(urlstring home))
-		  ((img :border 0 :src "/cliki.png" :alt "[ Home ]"))))
-	     ((td :colspan 3) "CLiki pages can be edited by anybody at any time.  Imagine a <i>scarily comprehensive legal disclaimer</i>.  Double it.  Add two.  <!-- Now shut your eyes.  Dark, isn't it? -->")))
+		 ((table :width "100%")
+		  (tr
+		   (td ((a :href ,(urlstring home))
+			((img :border 0 :src "/cliki.png" :alt "[ Home ]"))))
+		   ((td :colspan 3) "CLiki pages can be edited by anybody at any time.  Imagine a <i>scarily comprehensive legal disclaimer</i>.  Double it.  Add two.  <!-- Now shut your eyes.  Dark, isn't it? -->")))
 		 (center
 		  (table
 		   (tr
@@ -41,6 +41,19 @@
 	 (subseq out 0 (search "<DELETEME>" out))
 	 stream)))))
 
+(defmethod cliki-page-footer
+    ((cliki cliki-instance) request title)
+  (let ((page (find-page cliki title)))
+    (format (request-stream request)
+	    "<hr><form action=\"~Aadmin/search\"><a href=\"edit/~A\">Edit page</a> | <a href=\"~A?source\">View source</a> |  Last edit: ~A | <a href=\"CLiki+Search\"> Search:</a> <input name=words size=20></form>"
+	    (urlstring (cliki-url-root cliki))
+	    (urlstring-escape title) (urlstring-escape title)
+	    (if page
+		(universal-time-to-rfc-date
+		 (file-write-date (page-pathname page)))
+		"(none)"))))
+
+    
 (defun print-page-selector
     (stream start-of-page number-on-page total-length urlstring-stub)
   "Print result page selector with `previous', `next', and numbered links to each result page. Form links by glomming offset to URLSTRING-STUB"
@@ -98,9 +111,8 @@
 		     in-stream
 		     #'output #'dispatch)))))
 
-(defun view-page (request page title)
-  (let* ((out (request-stream request))
-	 (cliki (request-cliki request)))
+(defun view-page (cliki request page title)
+  (let ((out (request-stream request)))
     (request-send-headers request)
     (cliki-page-header cliki request title)
     (if page
@@ -129,14 +141,8 @@
 		    "Some error occured: <pre>~A</pre>" e)))
 	(format out
 		"This page doesn't exist yet.  Please create it if you want to"))
-    (format out "<hr><form action=\"~Aadmin/search\"><a href=\"~A?edit\">Edit page</a> | <a href=\"~A?source\">View source</a> |  Last edit: ~A | <a href=\"CLiki+Search\"> Search:</a> <input name=words size=20></form>"
-	    (urlstring (cliki-url-root cliki))
-            (urlstring-escape title) (urlstring-escape title)
-            (if page
-		(universal-time-to-rfc-date
-		 (file-write-date (page-pathname page)))
-		"(none)")
-            )))
+    (cliki-page-footer cliki request title)
+    t))
 
 
 (defgeneric html-for-keyword (cliki stream keyword &rest rest &key &allow-other-keys))
