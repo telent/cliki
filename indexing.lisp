@@ -10,7 +10,7 @@
 (defun create-indexes (root)
   (setf *backlinks* (make-hash-table)
         *categories* (make-hash-table))
-  (dolist (fn (directory root))
+  (dolist (fn (files-in-directory root))
     (unless (wild-pathname-p fn)
       (update-indexes-for-page (pathname-name fn) (directory-for fn)))))
 
@@ -44,19 +44,31 @@
                                           root)
                           (cdr l))))))))
 
+(defvar *last-directory* nil)
+(defvar *last-directory-time* 0)
+(defun files-in-directory (pathname)
+  (let* ((directory 
+	  (if (wild-pathname-p pathname)
+	      (make-pathname :name nil :type nil :version nil :defaults pathname)
+	    pathname))
+	 (write-time (file-write-date directory)))
+    (when (> write-time *last-directory-time*)
+      (setf *last-directory-time* write-time
+	    *last-directory*
+	    (remove-if-not #'pathname-name
+			   #+cmu18c (directory directory :check-for-subdirs nil :truenamep nil)
+			   #-cmu18c (directory directory :check-for-subdirs t))))
+    *last-directory*))
+
 (defun update-indexes-for-page (title root
                                       &aux
                                       (pathname (merge-pathnames title root)))
-  (unless (eql
-           (unix:unix-file-kind (namestring pathname))
-           :file)
-      (return-from update-indexes-for-page nil))
   (let* ((links
           (with-open-file (in pathname :direction :input)
             (grep-stream-for-links in '(#\_ #\*) root)))
          (page-links-on-updated-page (cdr (assoc #\_ links)))
          (category-links-on-updated-page (cdr (assoc #\* links))))
-    (loop for k in (mapcar #'pathname-name (directory root))
+    (loop for k in (mapcar #'pathname-name (files-in-directory root))
           if (member k category-links-on-updated-page :test #'equal)
           do (add-link-to-hashtable *categories* k title)
           else do (remove-link-from-hashtable *categories* k title)
