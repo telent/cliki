@@ -2,8 +2,10 @@
 
 Interactive user-updatable web pages a la wiki (http://www.c2.com/cgi/wiki)
 
-See the live CLikis at http://ww.telent.net/cliki/ and
-http://ww.telent.net/sbcl-internals/
+See the live CLikis at 
+ http://www.cliki.net/
+ http://sbcl-internals.cliki.net/
+ ... etc
 
 * Building it
 
@@ -25,12 +27,12 @@ somewhere in your URL hierarchy.  For example
       (make-instance 'cliki::cliki-instance
                      :data-directory "/var/www/cliki/"
                      :url-root (merge-url ww-url "/cliki/")))
-(export-handler (merge-url ww-url "/cliki/")
-                `(cliki::cliki-handler ,*cliki-instance*)
-                :needs-discriminator t)))
+(install-handler *root-handler* *cliki-instance* 
+		 (merge-url ww-url "/cliki/") nil)
 
 Note that data-directory must be writable by the user who is running
 the CL instance
+
 
 If you would like to run multiple CLikis on the same server, you can
 do that with multiple cliki-instances.  If you want them to have
