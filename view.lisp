@@ -21,7 +21,6 @@ intended for use as a FORMAT Tilde-slash function"
 (defun view-page (request title root)
   (let ((out  (request-stream request))
         (pathname (merge-pathnames title root)))
-    (update-indexes-for-page title root)
     (request-send-headers request)
     (format out
             "<html><head><title>Cliki : ~A</title></head>
@@ -31,7 +30,8 @@ intended for use as a FORMAT Tilde-slash function"
 <h1>~A</h1>~%" title request title)
     (handler-case
      (with-open-file (in pathname :direction :input)
-       (write-stream-to-stream in out))
+       (write-stream-to-stream in out)
+       (update-indexes-for-page title root))
      (file-error (e)                    ;probably just doesn't exist
                  (declare (ignore e))
                  (format out
