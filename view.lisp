@@ -18,22 +18,18 @@
                             ((link :rel "stylesheet" :href ,(ahref "admin/cliki.css"))))
                       (body
                        ((div :id "banner")
-
-                        ((form :class "search" :action "http://www.cliki.net/admin/search")
-                         ((input :name "words" :size "30"))
-                         ((input :type "submit" :value "search")))
-                        
-                        ((a :title "CLiki home page" :class "logo" :href ,(ahref nil))
+			((a :title "CLiki home page" :class "logo" :href ,(ahref nil))
                          "CL" ((span :class "sub") "iki"))
                         (span "the common lisp wiki")
                         ((div :id "navbar")
-                         ((a :href ,(ahref "recent changes")) "recent changes")
-                         ((a :href ,(ahref (format nil "edit/~A "title))) "edit this page")
-                         ((a :href ,(ahref (format nil "~A?source" title))) "view source")
+                         ((a :href ,(ahref "/")) "Home")
+			 ((a :href ,(ahref "Recent%20Changes")) "Recent Changes")
+                         ;((a :href ,(ahref (format nil "edit/~A "title))) "edit this page")
+                         ;((a :href ,(ahref (format nil "~A?source" title))) "view source")
+                         ((a :href ,(ahref "CLiki")) "About CLiki")
+                         ((a :href ,(ahref "Text%20Formatting")) "Text Formatting")
                          ((a :onclick ,(format nil "if(name=window.prompt('New page name ([A-Za-z0-9 ])')) document.location='~A/edit/'+name ;return false;" title) :href "#")
-                          "create new page")
-                         ((a :href ,(ahref "CLiki")) "about CLiki")
-                         ((a :href ,(ahref "Text Formatting")) "text formatting")))
+                          "Create New Page")))
 
                        (h1 ,title)
                        (deleteme))))))
@@ -43,18 +39,23 @@
 
 (defmethod cliki-page-footer
     ((cliki cliki-instance) request title)
-  (let ((page (find-page cliki title))
-	(out (request-stream request)))
-    (format out
-	    "<hr><div id=\"footer\"><a href=\"edit/~A\">Edit page</a> | <a href=\"~A?source\">View source</a> | Last edit: ~A "
-	    ;(urlstring (cliki-url-root cliki))
-	    (urlstring-escape title) (urlstring-escape title)
-	    (if page
-		(universal-time-to-rfc-date
-		 (file-write-date (page-pathname page)))
-		"(none)"))
-    (format out "<p class=\"disclaimer\">
-CLiki pages can be edited by anyone at any time.  Imagine a scarily comprehensive legal disclaimer.  Double it.  Add two.</p>")))
+  (let* ((page (find-page cliki title))
+	 (out (request-stream request))
+	 (text
+	  (format nil
+		  "<a href=\"edit/~A\">Edit page</a> | <a href=\"~A?source\">View source</a> | Last edit: ~A | "
+		  (urlstring-escape title) (urlstring-escape title)
+		  (if page
+		      (universal-time-to-rfc-date
+		       (file-write-date (page-pathname page)))
+		      "(none)"))))
+    (html-stream out
+		 `((div :id "footer")
+		   ((form  :action "/admin/search")
+		    ,text
+		    ((input :name "words" :size "30"))
+		    ((input :type "submit" :value "search")))))
+    (format out "</div><p>CLiki pages can be edited by anyone at any time.  Imagine a fearsomely comprehensive disclaimer of liability.  Now fear, comprehensively")))
 
 (defun print-page-selector
     (stream start-of-page number-on-page total-length urlstring-stub)
