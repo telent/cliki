@@ -1,9 +1,9 @@
 (in-package :cliki)
 
-(defun view-page-source (request title root)
+(defun view-page-source (request page title)
   (let ((out (request-stream request)))
     (handler-case
-     (with-open-file (in (merge-pathnames title root) :direction :input)
+     (with-open-file (in (page-pathname page) :direction :input)
        (request-send-headers request
                              :content-type "text/plain"
                              :expires (get-universal-time))
