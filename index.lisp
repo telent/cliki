@@ -130,7 +130,7 @@ is set by update-indexes-for-page (at startup and after edits).  "
 	      (let ((x (gethash term idf)))
 		(setf (gethash term idf) (1+ (or x 0)))))))
     (setf (slot-value cliki 'idf) idf)))
-    
+
 (defun search-for-string (cliki string)
   (let ((terms (mapcar
 		(lambda (x) (cons (stem-for-word x) 1))
