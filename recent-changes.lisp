@@ -42,8 +42,8 @@
 
 (defun same-day-p (date1 date2)
   (let ((start-of-date1
-         (with-date date1
-           (encode-universal-time 0 0 0 day-of-month month year))))
+         (with-date date1 nil
+	     (encode-universal-time 0 0 0 day-of-month month year))))
     (<= start-of-date1 date2 (+ start-of-date1 86400))))
 
 (defun view-recent-changes (request title root)
@@ -59,7 +59,7 @@
     (request-send-headers request)
     (format out
             "<html><head><title>Cliki : Recent Changes</title></head>
-<link rel=\"stylesheet\" href=\"/dan.css\">
+<link rel=\"stylesheet\" href=\"admin/cliki.css\">
 <body>
 ~/cliki-html:titlebar/
 <h1>Recent Changes</h1>~%<blockquote>This page is now updated automatically.  Look out for RSS exports in the near future too. -- ~A"
@@ -71,13 +71,13 @@
           and old-date = 0 then this-date
           if description
           unless (same-day-p this-date old-date)
-          do (with-date this-date
+          do (with-date this-date nil
                (format out
                        "</blockquote>
 <a name=~D><h3>~/cliki:dayname/ ~A ~/cliki:monthname/ ~A</h3></a>
 <blockquote>"
-                       this-date day day-of-month month year))
-          do (with-date this-date
+                       this-date day-of-week day-of-month month year))
+          do (with-date this-date nil
                (format out "<br> ~D:~2,'0D <b>~A</b> : ~A -- ~A ~%"
                        hour minute (write-a-href title root nil)
                        (car description)
