@@ -32,7 +32,8 @@
                          "CL" ((span :class "sub") "iki"))
                         (span "the common lisp wiki")
                         ((div :id "navbar")
-                         ((a :href ,(ahref "/")) "Home")
+                         ((a :href ,(ahref (cliki-default-page-name cliki)) )
+			  "Home")
 			 ((a :href ,(ahref "Recent%20Changes")) "Recent Changes")
                          ((a :href ,(ahref "CLiki")) "About CLiki")
                          ((a :href ,(ahref "Text%20Formatting")) "Text Formatting")
@@ -60,7 +61,8 @@
 		       (file-write-date (page-pathname page)))
 		      "(none)"))))
     (html-stream out
-		 `((form  :action "/admin/search")
+		 `((form  :action (merge-url (cliki-url-root cliki)
+					     "admin/search"))
 		   ((div :id "footer")
 		    ,text
 		    ((input :name "words" :size "30"))
@@ -69,7 +71,7 @@
     ;; One day I will separate cliki-the-app from cliki-the-website, I promise
     ;; In the meantime, you probably don't want this message
     #+nil
-    (format out "<P>To help defray the expenses of running CLiki, and fund the development of more free CL stuff, you can now <a href=\"https://www.paypal.com/xclick/business=dan%40telent.net&no_note=1&tax=0&currency_code=USD\">Donate via PayPal</a> to <a href=\"Daniel+Barlow\">dan@telent.net</a>.  If you like.")))
+    (format out "<P>To help defray the expenses of running CLiki, and fund the development of more free CL stuff, you can now <a href=\"https://www.paypal.com/xclick/business=dan%40metacircles.com&no_note=1&tax=0&currency_code=USD\">Donate via PayPal</a> to <a href=\"Daniel+Barlow\">dan@metacircles.com</a>.  If you like.")))
 
 
 (defun print-page-selector
