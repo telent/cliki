@@ -61,8 +61,8 @@
 		       (file-write-date (page-pathname page)))
 		      "(none)"))))
     (html-stream out
-		 `((form  :action (merge-url (cliki-url-root cliki)
-					     "admin/search"))
+		 `((form  :action ,(urlstring (merge-url (cliki-url-root cliki)
+							 "admin/search")))
 		   ((div :id "footer")
 		    ,text
 		    ((input :name "words" :size "30"))
