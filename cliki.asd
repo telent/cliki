@@ -4,7 +4,7 @@
 
 (defsystem cliki
   :depends-on (ARANEIDA net-telent-date)
-  :version "0.3.2"
+  :version "0.3.3"
   :components ((:file "defpackage")               
 	       (:file "cliki-instance-class" :depends-on ("defpackage"))
 	       (:file "cliki-instance" :depends-on ("cliki-instance-class"))
@@ -16,11 +16,10 @@
                (:file "indexing"
 		      :depends-on ("cliki-instance" "cliki-request"))
 	       (:file "index" :depends-on ("cliki-instance" "cliki-request"))
-	       (:file "streams" :depends-on ("cliki-instance-class"))
 	       (:file "hyperspec" :depends-on ("defpackage"))
                ;(:file "link-checker") :depends-on ("indexing"))
                (:file "view" :depends-on
-		      ("hyperspec" "streams" "cliki-request"))
+		      ("hyperspec"  "cliki-request"))
                (:file "recent-changes"
 		      :depends-on ("cliki-instance"  "cliki-request"))
                (:file "view-source"
