@@ -83,7 +83,7 @@
 <rss version=\"0.92\">
   <channel>
     <title>~A Recent Changes</title>
-    <link>~ARecent_Changes</link>
+    <link>~ARecent%20Changes</link>
     <description>~A Recent Changes</description>
 "
 	    (cliki-title cliki) 
