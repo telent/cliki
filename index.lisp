@@ -1,72 +1,160 @@
 (in-package :cliki)
 
+;;;; we do all indices for a page in a single pass here.  The protocol
+;;;; is extensible to new indices: look at 
+;;;; make-index-for-page
+;;;; add-to-index-for-page
+;;;; compute-index-for-page
+
+;;; This gets called once per page and calls the gfs for the methods
+;;; below
+
+(defmethod update-page-indices ((cliki cliki-instance) (page cliki-page))
+  (let ((indices nil)
+	(word-chars nil))
+    (labels ((index-for (c)
+	       (unless (assoc c indices)
+		 (push (cons c (make-index-for-page cliki page c)) indices))
+	       (assoc c indices))
+	     (update (token &rest args)
+	       (let ((i (index-for token)))
+		 (setf (cdr i)
+		       (add-to-index-for-page cliki page token (cdr i) args))))
+	     (dispatch (token arg)
+	       (destructuring-bind (token &rest args) (long-form-for token arg)
+		 (apply #'update token args)))
+	     (process-word (chars)
+	       (let ((word (coerce (nreverse chars) 'string)))
+		 (update :tf word)))
+	     (do-body-words (c)
+	       (cond ((and (not word-chars) (word-char-p c))
+		      (push c word-chars))
+		     ((and word-chars  (not (word-char-p c)))
+		      (process-word word-chars)
+		      (setf word-chars nil))
+		     (word-chars
+		      (push c word-chars)))))
+      (dolist (w (araneida::split (page-title page)))
+	(update :tf  w :weight 6))
+      (with-open-file (in-stream (page-pathname page))
+	(scan-stream (cliki-short-forms cliki)
+		     in-stream #'do-body-words #'dispatch))
+      (setf (page-indices page) indices)
+      (loop for i in indices
+	    for (n . v) = i
+	    do (setf (cdr i) (compute-index-for-page cliki page n v))))))
+
+
+;;; default methods are tuned to an index which is basically a list of all
+;;; the arguments from each time the term occurs,  so
+
+(defgeneric make-index-for-page (cliki page index-name))
+(defgeneric add-to-index-for-page (cliki page index-name index arguments))
+(defgeneric compute-index-for-page (cliki page index-name index))
+
+
+(defmethod make-index-for-page ((cliki cliki-instance) (page cliki-page)
+				(index-name t))
+  nil)
+
+(defmethod add-to-index-for-page ((cliki cliki-instance) (page cliki-page)
+				  (index-name t) index arguments)
+  (cons arguments index))
+
+;;; this is a crap name.  should be something like 'finalize', but not
+;;; that word exactly because it has been stolen from general use by GC
+
+(defmethod compute-index-for-page ((cliki cliki-instance) (page cliki-page)
+				  (index-name t) index)
+  index)
+
+;;; the backlinks and topic indices are special, because they're
+;;; updated on the "other" page: i.e. if Foo contains the marker
+;;; _(Bar), it is Bar which will be updated.  So we use this mechanism
+;;; to collect the pages to index, then when we have the full list of
+;;; referenced pages we loop over the collection and update all the
+;;; relevant links
+
+;;; these could both be made a lot faster if we saved the previous set
+;;; of links from the source page, and used it to delete the previous
+;;; page-{categories,topics} contents of the target pages
+(defmethod compute-index-for-page ((cliki cliki-instance)
+				   (source-page cliki-page)
+				   (index-name (eql :topic)) index)
+  (loop for target-page being the hash-values of (cliki-pages cliki)
+	for k = (canonise-title (page-title target-page))
+	
+	if (member target-page index)
+	do (pushnew source-page (page-topics target-page))
+	else do (setf (page-topics target-page)
+		      (remove source-page (page-topics target-page))))
+  index)
+
+(defmethod compute-index-for-page ((cliki cliki-instance)
+				   (source-page cliki-page)
+				   (index-name (eql :link)) index)
+  (loop for target-page being the hash-values of (cliki-pages cliki)
+	for k = (canonise-title (page-title target-page))
+	
+	if (member target-page index)
+	do (pushnew source-page (page-backlinks target-page))
+	else do (setf (page-backlinks target-page)
+		      (remove source-page (page-backlinks target-page))))
+  index)
+
+
+
+;;; Term Frequency indexing
+
+;;; Stop words.  Note that it ignores all words < 3 characters long,
+;;; so this list is considerably shorter than it might have to be
+
 (defparameter *stop-words*
   (list "http" "href" "that" "quot" "with" "may" "the" "don" "can" "non"
-	"but" "not" "will" "use" "from" "there" "for" "and"))
+	"but" "not" "will" "use" "from" "there" "for" "and"
+	"any" "are" "which" "etc" "them")) 
 
-(defun word-char-p (c)
-  (or (alpha-char-p c)
-      (member c '(#\_  #\. #\* #\( #\)))))
+;;; conceivably we might want to allow numbers or something as word
+;;; constituents
+(defun word-char-p (c) (alpha-char-p c))
 
-(defun read-word (stream)
-  "Read a word (sequence of characters satisfying WORD-CHAR-P) from STREAM.  Discards all leading and up to one following non-word character"
-  (let* ((c
-	  (loop for i = (read-char stream nil nil)
-		until (or (not i) (word-char-p i))
-		finally (return i)))
-	 (word
-	  (and c
-	       (loop for i = c then (read-char stream nil nil)
-		     while (and i (word-char-p i))
-		     collect i))))
-    (if word (coerce word 'string))))
-
-(defun weight-for-word (word)
-  (if
-   (or (< (length word) 3)		;stopwords
-       (member (string-downcase word)
-	       *stop-words* :test #'equal))
-   0
-   (let ((elt0 (elt word 0)))
-     (cond ((eq elt0 #\_) 2)			; links count extra
-	   ((eq elt0 #\*) 4)			; topics even more so
-	   (t 1)))))
-
-(defun string-trim-if-not (predicate string)
-  (let ((start (position-if predicate string))
-	(end  (position-if predicate string :from-end t)))
-    (if start
-	(subseq string start (and end (1+ end)))
-	"")))
+(defun interesting-word-p (word)
+  (not (or (< (length word) 3)
+	   (member (string-downcase word)
+		   *stop-words* :test #'equal))))
 
 (defun stem-for-word (word)
   "Return the stem of WORD.  Note: doesn't presently do it very well"
-  (let ((word (string-trim-if-not #'alpha-char-p word)))
-    (string-downcase (string-right-trim "s." word))))
+  (string-downcase (string-right-trim "s." word)))
 
-(defmethod term-frequencies ((document cliki-page))
-  "Read all words in the page DOCUMENT, discard stopwords, and return a hash table word -> frequency"
-  (let ((table (make-hash-table :test 'equal))
-	ret)
-    (labels ((add-word (word &optional weight)
-	       (let* ((stem (stem-for-word word))
-		      (n (gethash stem  table))
-		      (w (or weight (weight-for-word word))))
-		 (if (> w 0)
-		     (if (numberp n) (setf (gethash stem table) (+ w n))
-			 (setf (gethash stem table) w))))))
-      (dolist (w (araneida::split (page-title document)))
-	(add-word w 6))
-      (with-open-file (i (page-pathname document) :direction :input)
-	  (loop for word = (read-word i)
-	   while word
-	   do (add-word word))))
+
+(defmethod  make-index-for-page ((cliki cliki-instance) (page cliki-page)
+				(index-name (eql :tf)))
+  (make-hash-table :test #'equal))
+
+(defmethod add-to-index-for-page ((cliki cliki-instance) (page cliki-page)
+				  (index-name (eql :tf)) table arguments)
+  (destructuring-bind (word &key (weight 1) &allow-other-keys) arguments
+    (let ((stem (stem-for-word word)))
+      (when (interesting-word-p stem)
+	(let ((n (gethash stem  table)))
+	  (if (numberp n) (setf (gethash stem table) (+ weight n))
+	      (setf (gethash stem table) weight)))))
+    table))
+
+(defmethod compute-index-for-page ((cliki cliki-instance) (page cliki-page)
+				  (index-name (eql :tf)) table)
+  ;; we actually want a list of words rather than a hash table, to work
+  ;; with the search routines.  XXX would it help to sort the list?
+  (let ((ret nil))
     (with-hash-table-iterator (generator-fn table)
-	(loop     
-         (multiple-value-bind (more? k v) (generator-fn)
-           (unless more? (return))
-	   (push (cons k v) ret))))
+      (loop     
+       (multiple-value-bind (more? k v) (generator-fn)
+	 (unless more? (return))
+	 (push (cons k v) ret))))
     ret))
+
+
 
 ;;; if we kept our document vectors as _real_ vectors they'd probably
 ;;; be incredibly sparse for the most part.  So we have lists of
@@ -117,19 +205,6 @@ the docs with closest angle (biggest cos theta)
   (loop for d being the hash-values of table collect d))
 
 
-;;; was reindex-text
-(defun update-idf (cliki)
-  "Update idf, using page-tf for each page and summing stuff.  page-tf
-is set by update-indexes-for-page (at startup and after edits).  "
-  (let ((idf (make-hash-table :test 'equal)))
-    (loop for document being the hash-values of (cliki-pages cliki)
-	  do
-	  (let* ((frequencies (page-tf document))
-		 (terms (mapcar #'car frequencies)))
-	    (dolist (term terms)
-	      (let ((x (gethash term idf)))
-		(setf (gethash term idf) (1+ (or x 0)))))))
-    (setf (slot-value cliki 'idf) idf)))
 
 (defun search-for-string (cliki string)
   (let ((terms (mapcar
@@ -142,25 +217,3 @@ is set by update-indexes-for-page (at startup and after edits).  "
 		if (>  cos 0)
 		collect (cons document cos))
 	  #'> :key #'cdr)))
-
-
-#|
-
-
-(let ((h (make-hash-table :test 'eql)))
-  (setf (gethash "doo" h) 3)
-  (setf (gethash "boo" h) 4)
-  (hashtable-as-alist h))
-
-(let ((h (make-hash-table :test 'eql)))
-  (setf (gethash "doo" h) 3)
-  (setf (gethash "boo" h) 4)
-  (loop for k being each hash-key of h
-	collect (list k (gethash k h))))
-
-
-|#
-
-
-
-      
