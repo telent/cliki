@@ -162,10 +162,8 @@
 	      "This page doesn't exist yet.  Please create it if you want to")))
 
 (defun view-page (cliki request page title &key (version :newest))
-  (let* ((pathname (if page (page-pathname page :version version)))
-	 (lmtime (if pathname (file-write-date pathname) (get-universal-time))))
-    (request-send-headers request :conditional t 
-			  :last-modified lmtime)
+  (let ((lmtime (if page (page-last-modified page) (get-universal-time))))
+    (request-send-headers request :conditional t :last-modified lmtime)
     (with-page-surround (cliki request title)
       (if page
 	  (progn
@@ -310,11 +308,10 @@
 	   ,@(mapcar
 	      (lambda (x)
 		(let ((title (page-title x))
-		      (sentence (page-first-sentence x)))
-		  `(li ((a :class "internal"
-			   :href ,(urlstring-escape title))
-			,title) " - " 
-			,(subst-markup-in-string cliki sentence))))
+		      (sentence (or (page-first-sentence x) "(no summary)")))
+		  `(li ,(write-a-href cliki title nil)
+		       " - " 
+		       ,(subst-markup-in-string cliki sentence))))
 	      pages)))))))
 
 (defun strip-outer-parens (string)

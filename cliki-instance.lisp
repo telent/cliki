@@ -161,7 +161,7 @@ is set by update-page-indices (at startup and after edits).  "
      (cond
        (page
 	(request-send-headers request :last-modified 
-			      (file-write-date (page-pathname page)))
+			      (page-last-modified page))
 	t)
        (t nil)))))
    

@@ -65,6 +65,9 @@
 				    request )
   (let* ((cliki (handler-cliki handler))
 	 (auth-username (cliki-user-name cliki (request-user request)))
+	 (v (or (parse-integer 
+		 (or (car (url-query-param (request-url request) "v")) "")
+		 :junk-allowed t) :newest))
 	 (unauth-username (urlstring-unescape (request-cookie request "username"))))
     (multiple-value-bind (page title) (find-page-or-redirect cliki request)
       (if (< (length unauth-username) 1) (setf unauth-username nil))
@@ -88,7 +91,19 @@ This page is presently *(Uncategorized): please add appropriate
 _(topic markers) and remove this text
 </textarea>" title)))
 	  (if (and page (page-pathname page))
-	      (with-open-file (in-stream (page-pathname page) :direction :input)
+	      (with-open-file (in-stream (page-pathname page :version v)
+					 :direction :input)
+		(unless (or (eql v (car (page-versions page))) 
+			    (eql v :newest))
+		  (html-stream cliki::out 
+			       `(p "The text shown below is from a " (i "previous version") " of this page: saving your edits may overwrite changes made in more recent versions.  Please be sure this is what you want to do, or "
+				   ((a :href 
+				       ,(urlstring 
+					 (merge-url (cliki-url-root cliki)
+						    (format nil "edit/~A"
+							    (urlstring-escape title)))))
+				    "click here")
+				   " to recall the most recent version")))
 		(if (zerop (file-length in-stream))
 		    (write-sequence default out)
 		    (write-page-form-to-stream cliki in-stream out)))
