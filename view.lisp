@@ -106,7 +106,7 @@
 	(list (intern (string-upcase token) :keyword)
 	      (strip-outer-parens arg)))))
 
-(defun write-page-contents-to-stream (cliki page out-stream)
+(defun subst-markup-in-stream (cliki in-stream out-stream)
   "Read the file for PAGE and write to OUT-STREAM, substituting weird markup language elements as we go. "  
   (let ((newlines 0)
         (returns 0))
@@ -128,10 +128,20 @@
 		 (t
 		  (setf newlines 0 returns 0)
 		  (write-char c out-stream)))))
-      (with-open-file (in-stream (page-pathname page) :direction :input)
-	(scan-stream (cliki-short-forms cliki)
-		     in-stream
-		     #'output #'dispatch)))))
+      (scan-stream (cliki-short-forms cliki)
+		   in-stream
+		   #'output #'dispatch))))
+
+(defun subst-markup-in-string (cliki in-string)
+  (with-output-to-string (o)
+    (with-input-from-string (in in-string)
+      (subst-markup-in-stream cliki in o))))
+
+(defun write-page-contents-to-stream (cliki page out-stream)
+  "Read the file for PAGE and write to OUT-STREAM, substituting weird markup language elements as we go. "  
+  (with-open-file (in-stream (page-pathname page) :direction :input)
+    (subst-markup-in-stream cliki in-stream out-stream)))
+
 
 (defun view-page (cliki request page title)
   (request-send-headers request)
@@ -266,17 +276,22 @@
   (let* ((*read-eval* nil)
          (form (read-from-string (format nil "( ~A )" string) nil nil)))
     (destructuring-bind (term &key attribute match case-sensitive) form
-      (let ((titles
+      (let ((pages
              (legacy-search-pages
 	      cliki term :attribute attribute
 	      :match match :case-sensitive case-sensitive)))
-	(princ
-	 (html
-	  `(ul
-	    ,@(mapcar (lambda (x) `(li ((a :class "internal"
-					 :href ,(urlstring-escape x)) ,x)))
-		      titles)))
-	 stream)))))
+	(html-stream 
+	 stream
+	 `(ul
+	   ,@(mapcar
+	      (lambda (x)
+		(let ((title (page-title x))
+		      (sentence (page-first-sentence x)))
+		  `(li ((a :class "internal"
+			   :href ,(urlstring-escape title))
+			,title) " - " 
+			,(subst-markup-in-string cliki sentence))))
+	      pages)))))))
 
 (defun strip-outer-parens (string)
   (and (eql (elt string 0) #\()

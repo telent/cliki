@@ -76,7 +76,10 @@
  <!-- textarea wrap=virtual name=text rows=20 cols=80 -->~%")
 	(let ((default (format nil "<input type=hidden name=T0 value=BODY>
 <textarea wrap=virtual name=E0 rows=20 cols=80>
-Describe _(~A) here
+Describe ~A here
+<hr>
+This page is presently *(Uncategorized): please add appropriate 
+_(topic markers) and remove this text
 </textarea>" title)))
 	  (if page
 	      (with-open-file (in-stream (page-pathname page) :direction :input)

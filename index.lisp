@@ -19,6 +19,7 @@
 ;;; creating them at this time.  So, how can add-to-index-for-page get
 ;;; hold of the tf index?
 
+(defgeneric update-page-indices (cliki page))
 (defmethod update-page-indices ((cliki cliki-instance) (page cliki-page))
   (let ((indices nil)
 	(word-chars nil))
@@ -50,6 +51,19 @@
       (dolist (w (araneida:split (page-title page)))
 	(update :tf  w :weight 6))
       (with-open-file (in-stream (page-pathname page))
+	(let* ((start (file-position in-stream)))
+	  (setf (page-first-sentence page)
+		(with-output-to-string (o)
+		  (let (c in-tag)
+		    (loop 
+		     (setf c (read-char in-stream nil nil))
+		     (when (and (not in-tag)
+				(or (not c) (eql c #\.))) (return))
+		     (if (and (not in-tag) (eql c #\<)) (setf in-tag t))
+		     (unless (graphic-char-p c) (setf c #\Space))
+		     (unless in-tag (princ c o))
+		     (if (and in-tag (eql c #\>)) (setf in-tag nil))))))
+	  (file-position in-stream start)) ; rewind
 	(scan-stream (cliki-short-forms cliki)
 		     in-stream #'do-body-words #'dispatch))
       (setf (page-indices page) indices)

@@ -106,7 +106,7 @@
     (cliki term &key (attribute :body) (match :substring)
      (case-sensitive nil))
   "Search pages in PATHNAME for TERM according to the criteria in the keyword
-arguments.  Returns a list of page titles.
+arguments.  Returns a list of pages.
 ATTRIBUTE is (or :title :topic :body)
 MATCH is (or :exact :substring :regular-expression)
 CASE-SENSITIVE is (or t nil)"
@@ -116,7 +116,7 @@ CASE-SENSITIVE is (or t nil)"
      (:title (search-page-titles cliki term match case-sensitive))
      (:topic (search-page-topics cliki term match case-sensitive))
      (t (search-error "Unknown search attribute")))
-   #'string-lessp))
+   #'string-lessp :key #'page-title))
 
 
 (defun search-error (&rest args) (apply #'error args))
@@ -137,7 +137,7 @@ CASE-SENSITIVE is (or t nil)"
   (let ((pred (search-predicate match case-sensitive)))
     (loop for page being the hash-values of (cliki-pages cliki)
 	  if (funcall pred term (page-title page))
-	  collect (page-title page))))
+	  collect page)))
 
 (defun search-page-bodies (cliki term match case-sensitive)
   (declare (ignorable term pathname match case-sensitive))
@@ -148,14 +148,13 @@ CASE-SENSITIVE is (or t nil)"
   (let ((pred (search-predicate match case-sensitive)))
     ;; find all pages that have "term" in their name
     ;; display their combined topics lists
-    (mapcar #'page-title
-	    (remove-duplicates
- 	     (sort 
-	      (loop for page being the hash-values of (cliki-pages cliki)
-		    if (member term (page-names page) :test pred)
-		    append (page-topics page))
-	      #'string-lessp
-	      :key #'page-title)))))
+    (remove-duplicates
+     (sort 
+      (loop for page being the hash-values of (cliki-pages cliki)
+	    if (member term (page-names page) :test pred)
+	    append (page-topics page))
+      #'string-lessp
+      :key #'page-title))))
 
 
      
