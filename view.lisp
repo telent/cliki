@@ -127,9 +127,8 @@
 		     #'output #'dispatch)))))
 
 (defun view-page (cliki request page title)
-  (let ((out (request-stream request)))
-    (request-send-headers request)
-    (cliki-page-header cliki request title)
+  (request-send-headers request)
+  (with-page-surround (cliki request title)
     (if page
 	(progn
 	  (let* ((topics (remove page (page-topics page)))
@@ -140,21 +139,21 @@
 			#'string-lessp :key #'page-title)))
 	    (write-page-contents-to-stream cliki page out)
 	    (when topics
-	      (format out "<hr><p><b>Page~p in this topic: </b> " (length topics))
+	      (format out "<hr><p><b>Page~p in this topic: </b> "
+		      (length topics))
 	      (dolist (c topics)
 		(format out "~A &nbsp; "
 			(write-a-href cliki (page-title c) nil))))
 	    (when backlinks
 	      (format out "<hr><p><b>~A linked from: </b> "
-		      (if topics "Also" "This page is")
-		      (length backlinks))
+		      (if topics "Also" "This page is"))
 	      (dolist (c backlinks)
 		(format out "~A &nbsp; "
 			(write-a-href cliki (page-title c) nil))))))
 	(format out
-		"This page doesn't exist yet.  Please create it if you want to"))
-    (cliki-page-footer cliki request title)
-    t))
+		"This page doesn't exist yet.  Please create it if you want to")))
+
+  t)
 
 
 (defgeneric html-for-keyword (cliki stream keyword &rest rest &key &allow-other-keys))
