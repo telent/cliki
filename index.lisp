@@ -9,6 +9,16 @@
 ;;; This gets called once per page and calls the gfs for the methods
 ;;; below
 
+;;; XXX need some way to add contents of special tags to the tf
+;;; indexing, ideally in a way that each tag can define its importance.
+;;; This would be most useful if it could be called from
+;;; add-to-index-for-page
+
+;;; the problem with the preceding is that the indices we want to
+;;; update are not accessible from the page itself yet as we're still
+;;; creating them at this time.  So, how can add-to-index-for-page get
+;;; hold of the tf index?
+
 (defmethod update-page-indices ((cliki cliki-instance) (page cliki-page))
   (let ((indices nil)
 	(word-chars nil))
@@ -19,7 +29,10 @@
 	     (update (token &rest args)
 	       (let ((i (index-for token)))
 		 (setf (cdr i)
-		       (add-to-index-for-page cliki page token (cdr i) args))))
+		       (add-to-index-for-page cliki page token (cdr i)
+					      (lambda (x w)
+						(update :tf x :weight w))
+					      args))))
 	     (dispatch (token arg)
 	       (destructuring-bind (token &rest args) (long-form-for token arg)
 		 (apply #'update token args)))
@@ -49,7 +62,8 @@
 ;;; the arguments from each time the term occurs,  so
 
 (defgeneric make-index-for-page (cliki page index-name))
-(defgeneric add-to-index-for-page (cliki page index-name index arguments))
+(defgeneric add-to-index-for-page
+    (cliki page index-name index fulltext-fn arguments))
 (defgeneric compute-index-for-page (cliki page index-name index))
 
 
@@ -58,7 +72,7 @@
   nil)
 
 (defmethod add-to-index-for-page ((cliki cliki-instance) (page cliki-page)
-				  (index-name t) index arguments)
+				  (index-name t) index fulltext-fn arguments)
   (cons arguments index))
 
 ;;; this is a crap name.  should be something like 'finalize', but not
@@ -123,7 +137,7 @@
 
 (defun stem-for-word (word)
   "Return the stem of WORD.  Note: doesn't presently do it very well"
-  (string-downcase (string-right-trim "s." word)))
+  (string-right-trim "s." (string-downcase word)))
 
 
 (defmethod  make-index-for-page ((cliki cliki-instance) (page cliki-page)
@@ -131,7 +145,8 @@
   (make-hash-table :test #'equal))
 
 (defmethod add-to-index-for-page ((cliki cliki-instance) (page cliki-page)
-				  (index-name (eql :tf)) table arguments)
+				  (index-name (eql :tf)) table
+				  fulltext-fn arguments)
   (destructuring-bind (word &key (weight 1) &allow-other-keys) arguments
     (let ((stem (stem-for-word word)))
       (when (interesting-word-p stem)
