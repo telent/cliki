@@ -43,7 +43,7 @@
                               :response-text "Not found")))))
 
 (defun cliki-post-handler (request arg-string root)
-  (let ((title  (request-title request)))
+  (let ((title  (request-title request root)))
     (if title (save-page request title root))))
 
 (defun cliki-list-all-pages-handler (request arg-string url-root fs-root)
