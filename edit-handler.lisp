@@ -120,9 +120,8 @@ _(topic markers) and remove this text
 			 #'string-lessp)))))
       t)))
 
-
 (defun save-stream (cliki request pathname)
-  (with-open-file (out-file pathname :direction :output)
+  (with-open-file (out-file pathname :direction :output :if-exists :supersede)
     (let ((body (request-body request)))
       (loop for (name value) in body
 	    for el =
@@ -165,7 +164,8 @@ _(topic markers) and remove this text
 	(let ((pn (page-pathname page :version version)))
 	  (check-page-save-allowed cliki page version username)
 	  (save-stream cliki request pn)
-	  (with-open-file (out-file (title-file pn)  :direction :output)
+	  (with-open-file (out-file (title-file pn)  :direction :output
+				    :if-exists :overwrite)
 	    (with-standard-io-syntax
 	      (write (page-names page) :stream out-file)))
 	  (when summary
