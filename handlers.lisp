@@ -4,7 +4,7 @@
   (labels ((match-p (a b)
                     (string-equal (substitute #\_ #\Space a)
                                   (substitute #\_ #\Space b))))
-    (let* ((candidates (mapcar #'pathname-name (directory root))))
+    (let* ((candidates (mapcar #'pathname-name (files-in-directory root))))
       (or (find title candidates :test #'match-p)
           title))))
 
