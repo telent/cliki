@@ -1,11 +1,32 @@
 (in-package :cliki)
 
+(defun cliki-html::titlebar (stream format-arg colon-p at-p &rest params)
+  "Print a string of HTML that gets inserted at the top of each page.
+You could put your company logo here, or something like that.  This is
+intended for use as a FORMAT Tilde-slash function"
+  (declare (ignore colon-p at-p params))
+  (let* ((here (request-url format-arg))
+         (home (merge-url here "index")))
+  (write-sequence
+   (html
+    `((table :width "100%")
+      (tr
+       (td ((a :href ,(urlstring home)) "[ CLiki Home ]"))
+       (td ((a :href "http://araneida.telent.net/") "[ Araneida ]"))
+       (td ((a :href "http://cmucl.cons.org/cmucl/") "[ CMUCL ]"))
+       (td ((a :href "http://www.lisp.org/") "[ ALU ]")))
+      (tr ((td :colspan 4) (hr)))))
+   stream)))
+      
+
 (defun view-page (request title root)
   (let ((out  (request-stream request)))
     (request-send-headers request)
     (format out
             "<html><head><title>Cliki : ~A</title></head>
-<body><h1>~A</h1>~%" title title)
+<body>
+~/cliki-html:titlebar/
+<h1>~A</h1>~%" title request title)
     (handler-case
      (with-open-file (in (merge-pathnames title root) :direction :input)
        (write-stream-to-stream in out))
