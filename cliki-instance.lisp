@@ -11,15 +11,16 @@
 	       (string-downcase (cliki-default-page-name cliki)))
 	   (cliki-pages cliki)))
 
-(defmethod find-page-or-placeholder ((cliki cliki-view) title)
-  (or (find-page cliki title)
+(defmethod find-page-or-placeholder ((cliki cliki-view) titles)
+  (or (some (lambda (x) (find-page cliki x)) titles )
       (let ((p
-	     (make-instance 'cliki-page :title title
+	     (make-instance 'cliki-page :title (car titles)
 			    :pathname nil ; no pathname
-			    :names (list title)
+			    :names titles
 			    :versions nil
 			    :cliki cliki)))
-	(setf (gethash (canonise-title title) (cliki-pages cliki)) p)
+	(dolist (title titles)
+	  (setf (gethash (canonise-title title) (cliki-pages cliki)) p))
 	p)))
 
 (defun name-for-url (url)
@@ -75,13 +76,9 @@ is set by update-page-indices (at startup and after edits).  "
 		       (directory
 			(make-pathname :type :wild :defaults pathname))))
 	   #'>))
-	 (page (make-instance 'cliki-page :title (car titles)
-			      :names titles
-			      :versions (or versions (list 0))
-			      :pathname pathname
-			      :cliki cliki)))
-    (dolist (title titles)
-      (setf (gethash (canonise-title title) (cliki-pages cliki)) page))
+	 (page (find-page-or-placeholder cliki titles)))
+    (setf (page-versions page) (or versions (list 0))
+	  (page-pathname page) pathname)
     (cond ((probe-file meta)
 	   ; ... do stuff to reload the index data
 	   )
