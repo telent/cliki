@@ -1,68 +1,53 @@
 (in-package :cliki)
 
-(defclass cliki-request (request)
-  ((url-root :accessor cliki-request-url-root :initarg :url-root)
-   (data-directory :accessor cliki-request-data-directory
-		   :initarg :data-directory)))
-   
-(defvar *cliki-handlers* (list nil))
-(defvar *cliki-initialized-p* nil)
-
-(defun find-page-name (title root)
-  (labels ((match-p (a b)
-                    (string-equal (substitute #\_ #\Space a)
-                                  (substitute #\_ #\Space b))))
-    (let* ((candidates (mapcar #'pathname-name (files-in-directory root))))
-      (or (find title candidates :test #'match-p)
-          title))))
-
-(defun request-title (request root)
-  (let* ((string (urlstring-unescape (request-path-info request)))
-         (pos (position #\/ string :from-end t))
-         (search-string (subseq string (if pos (1+ pos) 0)))
-         (actual (find-page-name search-string root)))
-    (when (string= search-string actual)
-      (return-from request-title actual))
-    (request-redirect request
-                      (merge-url (request-url request) (urlstring-escape actual)))
-    nil))
+(defun css-file-handler (request rest-of-url)
+  (request-send-headers request :content-type "text/plain")
+  (write-sequence
+   "HTML { font-family: times,serif; } 
+BODY {  background-color: White }
+H1,H2,H3,H4 { font-family: Helvetica,Arial }
+H1 {  color: DarkGreen }
+H2 { font-size: 100% }
+DIV { margin-left: 5%; margin-right: 5% }
+A.internal { color: #0077bb }
+A.hyperspec { color: #442266 }
+" (request-stream request)))
 
 (defun cliki-get-handler (request arg-string)
-  (let* ((root (cliki-request-data-directory request))
-	 (title (request-title request root)))
-    (unless title (return-from cliki-get-handler))
+  (multiple-value-bind (page title) (find-page-or-redirect request)
+    (when (eql page :redirected) (return-from cliki-get-handler))
     (let ((action (url-query (request-url request))))
       (cond
        ((not action)
-        (view-page request title root))
+	(view-page request page title))
        ((string-equal action "source")
-        (view-page-source request title root))
+        (view-page-source request page title))
        ((string-equal action "edit")
-        (edit-page request title root))
+        (edit-page request page title))
        ;; can add in other ops like delete etc
        (t
         (request-send-error request 500 "Eh?"))))))
 
 (defun cliki-head-handler (request arg-string)
-  (let* ((root (cliki-request-data-directory request))
-	 (title (request-title request root)))
-    (unless title (return-from cliki-head-handler))
-    (let* ((file (merge-pathnames title root))
-           (date (file-write-date file)))
-      (if date
-          (request-send-headers request :last-modified date)
-        (request-send-headers request :response-code 404
-                              :response-text "Not found")))))
+  (multiple-value-bind (page title) (find-page-or-redirect request)
+    (when (eql page :redirected)
+      ;; no point answering the request, -or-redirect already did
+      (return-from cliki-head-handler))
+    (if page
+      (request-send-headers request :last-modified 
+			    (file-write-date (page-pathname page)))
+      (request-send-headers request :response-code 404
+			    :response-text "Not found"))))
 
 (defun cliki-post-handler (request arg-string)
-  (let* ((root (cliki-request-data-directory request))
-	 (title  (request-title request root)))
-    (if title (save-page request title root))))
+  (multiple-value-bind (page title) (find-page-or-redirect request)
+    (when (eql page :redirected) (return-from cliki-post-handler))
+    (save-page request page title)))
 
 (defun cliki-list-all-pages-handler (request arg-string)
-  (let* ((fs-root (cliki-request-data-directory request))
-	 (url-root (cliki-request-url-root request))
-	 (pages (mapcar #'pathname-name (files-in-directory fs-root))))
+  (let* ((pages (loop for p being the hash-values of
+		      (cliki-pages (request-cliki request))
+		      collect p)))
     (request-send-headers request)
     (write-sequence
      (html
@@ -74,15 +59,16 @@
           ,@(mapcar
              (lambda (x)
                `(li ((a :href
-                        ,(urlstring (merge-url url-root (urlstring-escape x))))
-                     ,x)))
-                pages)))))
+		      ,(urlstring (page-url x)))
+                     ,(page-title x))))
+	     pages)))))
      (request-stream request))))
 
 (defun cliki-search-handler (request rest-of-url)
   (let* ((url (request-url request))
+	 (cliki (request-cliki request))
 	 (words (car (url-query-param url  "words")))
-	 (results (search-for-string (urlstring-unescape words)))
+	 (results (search-for-string cliki (urlstring-unescape words)))
 	 (start (parse-integer
 		 (or (car (url-query-param url "start"))
 		     "0") :junk-allowed t))
@@ -92,15 +78,15 @@
     (send-cliki-page-preamble request "Search results")
 
     (format out "<form action=\"~Aadmin/search\"> Search again: <input name=words size=20 value=~S></form>"
-	    (urlstring (cliki-request-url-root request)) words)
+	    (urlstring (cliki-url-root cliki)) words)
     (cond (results
 	   (format out "<table>")
 	   (loop for (name . rel) in (subseq results start end)
 		 for j from start to end
-		 do (format out "~&<tr><td>~A</td><td><a href=\"../~A\">~A</a> (~,01F% relevant)</td></tr>"
+		 do (format out "~&<tr><td>~A</td><td><a href=\"~A\">~A</a> (~,01F% relevant)</td></tr>"
 			    (1+ j)
-			    (urlstring-escape (pathname-name (parse-namestring name)))
-			    (pathname-name (parse-namestring name))
+			    (urlstring (page-url name))
+			    (page-title name)
 			    (* rel 100)))
 	   (format out "~&</table>")
 	   (print-page-selector
@@ -111,49 +97,12 @@
 	  (t (format out "Sorry, no pages match your search term.  Whack fol o diddle i ay")))))
 		     
 
-#|
-(setf *cliki-initialized-p* nil)
-|#
-(defun cliki-handler (request exports discriminator arg-string fs-root)
+(defun cliki-handler (request exports discriminator arg-string cliki-instance)
   (declare (ignore exports arg-string))
-  (unless *cliki-initialized-p*
-    (initialize (request-base-url request) fs-root))
   (change-class request 'cliki-request)
-  (setf (cliki-request-url-root request) (request-base-url request)
-	(cliki-request-data-directory request) fs-root)
-  (dispatch-request request *cliki-handlers* discriminator))
+  (setf (request-cliki request) cliki-instance)
+  (dispatch-request request (cliki-handlers cliki-instance) discriminator))
 
-;;; these are bound in cliki-handler
-
-(defun initialize (base-url directory)
-  (setf *last-directory-time* 0)
-  (create-indexes directory)
-  (setf  *cliki-handlers* (list nil))
-  (setf *tfidf-index* (reindex-text directory))
-  (restore-recent-changes directory)
-  (export-handler base-url 'cliki-get-handler
-		  :method :get :stage *cliki-handlers*)
-  (export-handler base-url
-		  (lambda (r rest)
-		    (declare (ignore rest))
-		    (request-redirect
-		     r (merge-url (request-url r) "index")))
-		  :match :exact :method :get :stage *cliki-handlers*)
-  (export-handler base-url 'cliki-head-handler
-		  :method :head :stage *cliki-handlers*)
-  (export-handler base-url 'cliki-post-handler 
-		  :method :post :stage *cliki-handlers*)
-  (export-handler (merge-url base-url "admin/all-pages")
-                  'cliki-list-all-pages-handler :stage *cliki-handlers*)
-  (export-handler (merge-url base-url "admin/cliki.css")
-		  'css-file-handler  :stage *cliki-handlers*)
-  (export-handler (merge-url base-url "admin/search")
-		  'cliki-search-handler :stage *cliki-handlers*)
-  (export-handler (merge-url base-url "Recent%20Changes")
-		  `(view-recent-changes) :stage *cliki-handlers*)
-  (export-handler (merge-url base-url "Recent+Changes")
-		  `(view-recent-changes) :stage *cliki-handlers*)
-  (setf *cliki-initialized-p* t))
 
 
 (defun test ()

@@ -44,8 +44,8 @@
   (let ((word (string-trim-if-not #'alpha-char-p word)))
     (string-downcase (string-right-trim "s." word))))
 
-(defun term-frequencies (document)
-  "Read all words in the file DOCUMENT, discard stopwords, and return a hash table word -> frequency"
+(defmethod term-frequencies ((document cliki-page))
+  "Read all words in the page DOCUMENT, discard stopwords, and return a hash table word -> frequency"
   (let ((table (make-hash-table :test 'equal))
 	ret)
     (labels ((add-word (word)
@@ -55,9 +55,9 @@
 		 (if (> w 0)
 		     (if (numberp n) (setf (gethash stem table) (+ w n))
 			 (setf (gethash stem table) w))))))
-      (dolist (w (araneida::split (pathname-name document)))
+      (dolist (w (araneida::split (page-title document)))
 	(add-word w))
-      (with-open-file (i document :direction :input)
+      (with-open-file (i (page-pathname document) :direction :input)
 	  (loop for word = (read-word i)
 	   while word
 	   do (add-word word))))
@@ -113,42 +113,31 @@ then we do dot product between search term and each other document to find
 the docs with closest angle (biggest cos theta)	
 |#
 
-(defvar *idf-index* (make-hash-table :test 'equal))
-(defvar *tfidf-index* nil)
+(defun hash-table-values (table)
+  (loop for d being the hash-values of table collect d))
 
-(defun reindex-text (directory)
-  (let* (tf
-	 (idf (make-hash-table :test 'equal))
-	 (documents (files-in-directory directory))
-	 (num-documents (length documents)))
-    (dolist (document documents)
-      (let* ((frequencies (term-frequencies document))
-	     (terms (mapcar #'car frequencies)))
-	(push (cons (namestring document) frequencies) tf)
-	(dolist (term terms)
-	  (let ((x (gethash term idf)))
-	    (setf (gethash term idf) (1+ (or x 0)))))))
-    (with-hash-table-iterator (generator-fn idf)
-	(loop     
-         (multiple-value-bind (more? k v) (generator-fn)
-           (unless more? (return))
-	   (setf (gethash k *idf-index*) (log (/ num-documents v))))))
-    ;; now we rerite tf inplace to become tfidf
-    (dolist (document tf)
-      (dolist (term (cdr document))
-	(setf (cdr term) (* (cdr term) (gethash (car term) *idf-index*)))))
-    tf))
+
+;;; was reindex-text
+(defun update-idf (cliki)
+  "Update idf, using page-tf for each page and summing stuff.  page-tf
+is set by update-indexes-for-page (at startup and after edits).  "
+  (let ((idf (make-hash-table :test 'equal)))
+    (loop for document being the hash-values of (cliki-pages cliki)
+	  do
+	  (let* ((frequencies (page-tf document))
+		 (terms (mapcar #'car frequencies)))
+	    (dolist (term terms)
+	      (let ((x (gethash term idf)))
+		(setf (gethash term idf) (1+ (or x 0)))))))
+    (setf (slot-value cliki 'idf) idf)))
     
-(defun tfidf (document term)
-  (let ((terms (cdr (assoc (namestring document) *tfidf-index* :test 'equal))))
-    (or (and terms (assoc term terms :test 'equal)) 0)))
-
-(defun search-for-string (string)
+(defun search-for-string (cliki string)
   (let ((terms (mapcar
 		(lambda (x) (cons (stem-for-word x) 1))
 		(remove-if-not (lambda (w) (> (weight-for-word w) 0))
 			       (araneida::split string)))))
-    (sort (loop for (document . doc-terms) in *tfidf-index*
+    (sort (loop for document being the hash-values of (cliki-pages cliki)
+		for doc-terms = (page-tfidf document)
 		for cos = (document-vector-cosine terms doc-terms)
 		if (>  cos 0)
 		collect (cons document cos))
@@ -156,7 +145,6 @@ the docs with closest angle (biggest cos theta)
 
 
 #|
-
 
 
 (let ((h (make-hash-table :test 'eql)))

@@ -6,7 +6,7 @@ You could put your company logo here, or something like that.  This is
 intended for use as a FORMAT Tilde-slash function"
   (declare (ignore colon-p at-p params))
   (let* ((here (request-url format-arg))
-         (home (cliki-request-url-root format-arg)))
+         (home (cliki-url-root (request-cliki format-arg))))
     (labels ((ahref (l) (urlstring (araneida:merge-url home l)))) 
       (write-sequence
        (html
@@ -22,7 +22,7 @@ intended for use as a FORMAT Tilde-slash function"
 	     (td ((a :href ,(ahref "#")) "[ Home ]"))
 	     (td ((a :href ,(ahref "Recent%20Changes")) "[ Recent Changes ]"))
 	     (td ((a :href ,(ahref "CLiki")) "[ About CLiki ]"))
-	     (td ((a :href ,(ahref "Text Formatting")) "[ Text Formatting ]")))
+	     (td ((a :href ,(ahref "Text%20Formatting")) "[ Text Formatting ]")))
 	    ))
 	  (hr)))
        stream))))
@@ -34,21 +34,8 @@ intended for use as a FORMAT Tilde-slash function"
 <body>
 ~/cliki-html:titlebar/
 <h1>~A</h1>~%"
-	    title head (urlstring (cliki-request-url-root request))
+	    title head (urlstring (cliki-url-root (request-cliki request)))
 	    request title)))
-
-(defun css-file-handler (request rest-of-url)
-  (request-send-headers request :content-type "text/plain")
-  (write-sequence
-   "HTML { font-family: times,serif; } 
-BODY {  background-color: White }
-H1,H2,H3,H4 { font-family: Helvetica,Arial }
-H1 {  color: DarkGreen }
-H2 { font-size: 100% }
-DIV { margin-left: 5%; margin-right: 5% }
-A.internal { color: #0077bb }
-A.hyperspec { color: #442266 }
-" (request-stream request)))
 
 (defun print-page-selector
     (stream start-of-page number-on-page total-length urlstring-stub)
@@ -71,50 +58,46 @@ A.hyperspec { color: #442266 }
 	  (url "Next" (+ first-on-screen number-on-page)))
       (princ "</tr></table></center>" stream))))
 
-(defun view-page (request title root)
-  (let ((out  (request-stream request))
-        (pathname (merge-pathnames title root)))
+(defun view-page (request page title)
+  (let* ((out (request-stream request))
+	 (cliki (request-cliki request)))
     (request-send-headers request)
     (send-cliki-page-preamble request title)
-    (handler-case
-     (with-open-file (in pathname :direction :input)
-       (write-stream-to-stream in out)
-       (update-indexes-for-page title root))
-     (file-error (e)                    ;probably just doesn't exist
-                 (declare (ignore e))
-                 (format out
-                                "This page doesn't exist yet.  Please create it if you want to") '())
-     (error (e)
-            (format out
-                    "Some error occured: <pre>~A</pre>" e)
-            '()))
-    (let* ((categories (gethash (intern title #.*package*) *categories*))
-           (backlinks
-            (sort (set-difference (gethash (intern title #.*package*) *backlinks*)
-                                  categories :test #'equal)
-                  #'string-lessp)))
-      (when categories
-        (format out "<hr><b>Page~p in this topic: </b> " (length categories))
-        (dolist (c categories)
-          (format out "~A &nbsp; "
-                  (write-a-href c root nil))))
-      (when backlinks
-        (format out "<hr><b>~A linked from: </b> "
-                (if categories "Also" "This page is")
-                (length backlinks))
-        (dolist (c backlinks)
-          (format out "~A &nbsp; "
-                  (write-a-href c root nil)))))
+    (if page
+	(handler-case
+	    (let* ((categories (page-categories page))
+		   (backlinks
+		    (sort (set-difference (page-backlinks page) categories)
+			  #'string-lessp :key #'page-title)))
+	      (with-open-file (in (page-pathname page) :direction :input)
+		  (write-stream-to-stream cliki in out))
+	      (when categories
+		(format out "<hr><b>Page~p in this topic: </b> " (length categories))
+		(dolist (c categories)
+		  (format out "~A &nbsp; "
+			  (write-a-href cliki (page-title c) nil))))
+	      (when backlinks
+		(format out "<hr><b>~A linked from: </b> "
+			(if categories "Also" "This page is")
+			(length backlinks))
+		(dolist (c backlinks)
+		  (format out "~A &nbsp; "
+			  (write-a-href cliki (page-title c) nil)))))
+	  (error (e)
+	    (format out
+		    "Some error occured: <pre>~A</pre>" e)))
+	(format out
+		"This page doesn't exist yet.  Please create it if you want to"))
     (format out "<hr><form action=\"/cliki/admin/search\"><a href=\"~A?edit\">Edit this page</a> | <a href=\"~A?source\">View page source</a> |  Last edit: ~A | <a href=\"CLiki+Search\"> Search CLiki</a> <input name=words size=20></form>"
             (urlstring-escape title) (urlstring-escape title)
-            (araneida::aif (file-write-date pathname)
-			   (date::universal-time-to-rfc-date araneida::it)
-                 "(none)")
+            (if page
+		(file-write-date (page-pathname page))
+		"(none)")
             )))
 
 
-(defun write-stream-to-stream (in-stream out-stream)
-  "Read from IN-STREAM and write to OUT-STREAM, substituting weird markup language elements as we go.  IN-STREAM must be a FILE-STREAM or SYNONYM-STREAM associated with same if internal links are to work."  
+(defun write-stream-to-stream (cliki in-stream out-stream)
+  "Read from IN-STREAM and write to OUT-STREAM, substituting weird markup language elements as we go. "  
   (let ((eof (gensym))
         (newlines 0)
         (returns 0))
@@ -138,29 +121,29 @@ A.hyperspec { color: #442266 }
        ;; be turned into dispatches to a helper function per special char
        ((and (eql c #\/) (eql c1 #\())  ; search
         (write-search-result
-         (directory-for in-stream)
-         (read-matched-parens in-stream) out-stream))
+         cliki (read-matched-parens in-stream) out-stream))
        ((and (member c '(#\* #\_)) (eql c1 #\())  ; link
         (write-a-href
-         (strip-outer-parens (read-matched-parens in-stream))
-         (directory-for in-stream) out-stream))
+	 cliki (strip-outer-parens (read-matched-parens in-stream)) out-stream))
        ((and (eql c #\#) (eql (char-upcase c1) #\H))
-        (read-char in-stream)
-        (let* ((term (strip-outer-parens (read-matched-parens in-stream)))
-               (url (hyperspec-url term)))
-          (if url
-              (format out-stream "<a class=\"hyperspec\" href = \"~a\">~a</a>" url 
-		      term)
-              (write-string out-stream term))))
+        (let* ((h (read-char in-stream))
+	       (term (read-matched-parens in-stream))
+	       (stripped-term (strip-outer-parens term))
+               (url (and stripped-term (hyperspec-url stripped-term ))))
+          (cond (url
+		 (format out-stream "<a class=\"hyperspec\" href = \"~a\"><b>~a</b></a>" url stripped-term))
+		(stripped-term
+		 (write-string term out-stream))
+		(t
+		 (format out-stream "~C~C~A" #\# h term)))))
        (t (write-char c out-stream)) ))))
-       
 
-(defun write-search-result (directory string stream)
+(defun write-search-result (cliki string stream)
   (let* ((*read-eval* nil)
          (form (read-from-string string nil nil)))
     (destructuring-bind (term &key attribute match case-sensitive) form
       (let ((titles
-             (search-pages term directory :attribute attribute :match match  
+             (search-pages cliki term :attribute attribute :match match  
                            :case-sensitive case-sensitive)))
         (write-sequence
          (html
@@ -171,14 +154,15 @@ A.hyperspec { color: #442266 }
          stream)))))
 
 (defun strip-outer-parens (string)
-  (subseq string 1 (- (length string) 1)))
+  (and (eql (elt string 0) #\()
+       (subseq string 1 (- (length string) 1))))
 
 ;; caller should unescape STRING if it needed it
 
-(defun write-a-href (title root stream)
-  "Write an A HREF element for the CLiki page TITLE found in the directory ROOT.  STREAM may be an open stream or T or NIL, a la FORMAT"
+(defmethod write-a-href ((cliki cliki-instance) title stream)
+  "Write an A HREF element for the CLiki page TITLE.  STREAM may be an open stream or T or NIL, a la FORMAT"
   (let ((escaped (urlstring-escape title)))
-    (if (probe-file (merge-pathnames (find-page-name title root) root))
+    (if (find-page cliki title)
         (format stream "<a class=\"internal\" href=\"~A\" >~A</a>" escaped title)
       (format stream "~A<a class=\"internal\" href=\"~A?edit\" >?</a>" title escaped))))
 
