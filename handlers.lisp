@@ -83,7 +83,7 @@ pre
 
 .search
 { 
-  float: right;
+/*   float: right; */
   text-align: right;
   text-transform: lowercase;
 }
