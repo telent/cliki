@@ -42,6 +42,7 @@
                (:file "handlers" :depends-on
                       ("view" "index" "view-source" "search"))
 	       (:file "cliki-skin" :depends-on ("cliki-instance-class"))
+	       (:static-file "example" :pathname "example.lisp")
 	       (:static-file "TODO")
 	       (:static-file "make-TODO" :pathname "make-TODO.pl")
 	       (:static-file "NEWS")
