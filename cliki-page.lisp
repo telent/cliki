@@ -17,11 +17,11 @@
 			(* frequency (log (/ (cliki-number-of-documents cliki)
 					     (cliki-idf cliki term))))))))
 
-(defmethod page-url ((page cliki-page))
-  (merge-url (cliki-url-root (page-cliki page))
+(defmethod page-url ((cliki cliki-instance) (page cliki-page))
+  (merge-url (cliki-url-root cliki)
 	     (urlstring-escape (page-title page))))
 
-(defmethod page-summary ((cliki cliki-instance) (page cliki-page) search-term)
+(defmethod page-summary ((cliki cliki-view) (page cliki-page) search-term)
   (loop for i in (apply #'search-term-summary cliki page search-term)
 	append `(,i (br))))
 

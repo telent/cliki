@@ -10,7 +10,7 @@
      (substitute #\Space #\_
 		 (urlstring-unescape (remove #\% title))))))
 
-(defmethod find-page ((cliki cliki-instance) title)
+(defmethod find-page ((cliki cliki-view) title)
   (gethash (canonise-title title) (cliki-pages cliki)))
 
 (defmethod cliki-idf ((cliki cliki-instance) term)
@@ -18,7 +18,7 @@
 
 ;;; XXX this doesnt give an entirely correct answer because it counts
 ;;; aliases twice
-(defmethod cliki-number-of-documents ((cliki cliki-instance))
+(defmethod cliki-number-of-documents ((cliki cliki-view))
   (hash-table-count (cliki-pages cliki)))
 
 (defun update-idf (cliki)
@@ -52,56 +52,63 @@ is set by update-page-indices (at startup and after edits).  "
 			       :filename
 			       (make-pathname :name (pathname-name f)) ;ew
 			       :cliki cliki)))
-	(format t "Adding page ~D~%" p) 
 	(dolist (title titles)
 	  (setf (gethash (canonise-title title) (cliki-pages cliki))
 		p))))
     (loop for page being the hash-values of (cliki-pages cliki)
-	  do (update-page-indices cliki page)) 
+	  do
+	  (progn
+	    (format t "Indexing page ~D~%" page)
+	    (update-page-indices cliki page)))
     (update-idf cliki)
-    (restore-recent-changes cliki)
-    (let ((edit-handler (make-instance 'edit-handler :cliki cliki)))
-      (install-handler cliki edit-handler "edit/" nil))
+    (restore-recent-changes cliki)))
 
-    (install-handler cliki 'cliki-list-all-pages-handler "admin/all-pages" t)
-    (install-handler cliki
-		     (lambda (request)
-		       (request-send-headers request
-					     :content-type "text/css")
-		       (cliki-css-text cliki (request-stream request))
-		       t)
-		     "admin/cliki.css" t)
+(defmethod shared-initialize
+    :after ((cliki cliki-view) slot-names &rest initargs)
+  (declare (ignorable initargs))
+  (let ((edit-handler (make-instance 'edit-handler :cliki cliki)))
+    (install-handler cliki edit-handler "edit/" nil))
+  
+  (install-handler cliki 'cliki-list-all-pages-handler "admin/all-pages" t)
+  (install-handler cliki
+		   (lambda (request)
+		     (request-send-headers request
+					   :content-type "text/css")
+		     (cliki-css-text cliki (request-stream request))
+		     t)
+		   "admin/cliki.css" t)
 
-    (install-handler cliki
-		     (lambda (request)
-		       (request-send-error request 404 "not found"))
-		     "favicon.ico" nil)
-    (install-handler cliki 'cliki-search-handler "admin/search" nil)
-    (install-handler cliki `(view-recent-changes) "Recent%20Changes" nil)
-    (install-handler cliki `(rdf-recent-changes) "recent-changes.rdf" t)
-    (install-handler cliki `(sexp-recent-changes) "recent-changes.sexp" t)
-    (install-handler cliki `(view-recent-changes) "Recent+Changes" nil)
-  ))
+  (install-handler cliki
+		   (lambda (request)
+		     (request-send-error request 404 "not found"))
+		   "favicon.ico" nil)
+  (install-handler cliki 'cliki-search-handler "admin/search" nil)
+  (install-handler cliki `(view-recent-changes) "Recent%20Changes" nil)
+  (install-handler cliki `(rdf-recent-changes) "recent-changes.rdf" t)
+  (install-handler cliki `(sexp-recent-changes) "recent-changes.sexp" t)
+  (install-handler cliki `(view-recent-changes) "Recent+Changes" nil))
+  
 
+#+nil
 (defmethod render-html (request
 			(cliki cliki-instance) (handler araneida:handler)
 			html-tree )
   (html-stream (request-stream request) html-tree))
 
-(defmethod handle-request-authentication ((handler cliki-instance)
+(defmethod handle-request-authentication ((handler cliki-view)
 					  method request)
   (setf (request-user request) (request-cookie request "auth-username")))
 
 (defmethod request-cliki ((request request))
   (labels ((find-handler (handlers)
 	     (cond ((null handlers) nil)
-		   ((typep (caar handlers) 'cliki-instance)
+		   ((typep (caar handlers) 'cliki-view)
 		    (caar handlers))
 		   (t (find-handler (cdr handlers))))))
     (find-handler (request-handled-by request))))
 		    
 
-(defmethod handle-request-response ((handler cliki-instance)
+(defmethod handle-request-response ((handler cliki-view)
 				    (method (eql :head))
 				    request )
   (or
@@ -114,7 +121,7 @@ is set by update-page-indices (at startup and after edits).  "
 	t)
        (t nil)))))
    
-(defmethod handle-request-response ((handler cliki-instance)
+(defmethod handle-request-response ((handler cliki-view)
 				    (method (eql :get))
 				    request )
   (or

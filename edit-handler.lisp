@@ -1,18 +1,18 @@
 (in-package :cliki)
 
-(defmethod form-element-for-keyword ((cliki cliki-instance) n keyword &rest args)
+(defmethod form-element-for-keyword ((cliki cliki-view) n keyword &rest args)
   (declare (ignore args))
   nil)
 
 (defmethod parse-form-element-for-keyword
-    ((cliki cliki-instance) request keyword prefix)
+    ((cliki cliki-view) request keyword prefix)
   (format *trace-output* "~A => ~A~%"
 	  keyword (body-params (format nil "Eb~A" prefix)
 			       (request-body request)))
   "dummy")
 
 (defmethod parse-form-element-for-keyword
-    ((cliki cliki-instance) request (keyword (eql :body)) prefix)
+    ((cliki cliki-view) request (keyword (eql :body)) prefix)
   (body-param (format nil "E~A" prefix) (request-body request)))
 
 (defun write-page-form-to-stream (cliki in-stream stream)
@@ -69,39 +69,39 @@
       (request-send-headers request
 			    :expires (get-universal-time)
 			    :cache-control "no-cache")
-      (cliki-page-header cliki request (format nil "Edit ``~A''" title)
-			 '(((meta :name "ROBOTS"
-			     :content "noindex,nofollow"))))
-      (format out "
+      (with-page-surround (cliki request (format nil "Edit ``~A''" title)
+				 '(((meta :name "ROBOTS"
+				     :content "noindex,nofollow"))))
+	(format out "
  <form method=post>
  <!-- textarea wrap=virtual name=text rows=20 cols=80 -->~%")
-      (let ((default (format nil "<input type=hidden name=T0 value=BODY>
+	(let ((default (format nil "<input type=hidden name=T0 value=BODY>
 <textarea wrap=virtual name=E0 rows=20 cols=80>
 Describe _(~A) here
 </textarea>" title)))
-	(if page
-	    (with-open-file (in-stream (page-pathname page) :direction :input)
-	      (if (zerop (file-length in-stream))
-		  (write-sequence default out)
-		  (write-page-form-to-stream cliki in-stream out)))
-	    (write-sequence default out)))
-      (format out "<!-- /textarea-->
+	  (if page
+	      (with-open-file (in-stream (page-pathname page) :direction :input)
+		(if (zerop (file-length in-stream))
+		    (write-sequence default out)
+		    (write-page-form-to-stream cliki in-stream out)))
+	      (write-sequence default out)))
+	(format out "<!-- /textarea-->
  <br>Please supply ~Aa summary of changes for the Recent Changes page.  If you are making a minor alteration to a page you recently edited, you can avoid making another Recent Changes entry by leaving the Summary box blank
  <br><b>Summary of changes:</b>
   <input type=text size=60 name=summary value=\"\">"
-	      (if (request-user request) "" "your name and " ))
-      (if (request-user request)
-	  (format out "<br><b>Your name:</b> <tt>~A</tt>
+		(if (request-user request) "" "your name and " ))
+	(if (request-user request)
+	    (format out "<br><b>Your name:</b> <tt>~A</tt>
  <br><input type=submit value=Save name=Save></form></body></html>"
-		  auth-username)
-	  (format out
-		  "<br><b>Your name:</b>
+		    auth-username)
+	    (format out
+		    "<br><b>Your name:</b>
   <input type=text size=30 name=name value=~S>
  <br><input type=checkbox ~A name=rememberme > <b>Check this box to fill in your name automatically next time</b> (uses a cookie)
   <br><input type=submit value=Save name=Save></form></body></html>"
-		  (or unauth-username "A N Other")
-		  (if unauth-username "checked=checked" "")))
-      t)))
+		    (or unauth-username "A N Other")
+		    (if unauth-username "checked=checked" "")))
+	t))))
 
 
 (defun save-stream (cliki request pathname)

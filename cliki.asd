@@ -16,6 +16,7 @@
 	       (:file "edit-handler-class" :depends-on ("defpackage"))
 	       (:file "edit-handler" :depends-on ("cliki-request-class"
 						  "cliki-page-class"
+						  "view"
 						  "edit-handler-class"))
 	       (:file "authed-cliki-class" :depends-on ("cliki-instance"
 							"edit-handler"))
@@ -28,8 +29,8 @@
                (:file "view" :depends-on
 		      ("hyperspec"  "cliki-request"))
                (:file "recent-changes"
-		      :depends-on ("cliki-instance"  "cliki-request"))
-               (:file "view-source"
+		      :depends-on ("view" "cliki-instance"  "cliki-request"))
+	       (:file "view-source"
 		      :depends-on ("cliki-instance" "cliki-request"))
                (:file "buffered-output-stream-class"
 		      :depends-on ("defpackage"))
@@ -40,6 +41,7 @@
                (:file "search" :depends-on ("index" "elided-stream" "strip-html-stream"))
                (:file "handlers" :depends-on
                       ("view" "index" "view-source" "search"))
+	       (:file "cliki-skin" :depends-on ("cliki-instance-class"))
 	       (:static-file "TODO")
 	       (:static-file "make-TODO" :pathname "make-TODO.pl")
 	       (:static-file "NEWS")

@@ -2,39 +2,39 @@
 
 ;;; generalised topic searching
 
-(defmethod search-term-relevance ((cliki cliki-instance) page
+(defmethod search-term-relevance ((cliki cliki-view) page
 				  (term (eql :or)) &rest args)
   (/ (apply #'+ (mapcar (lambda (x)
 			  (apply #'search-term-relevance cliki page x))
 			args)) 2))
 
-(defmethod search-term-summary ((cliki cliki-instance) page 
+(defmethod search-term-summary ((cliki cliki-view) page 
 				  (term (eql :or)) &rest args)
   (loop for p in args
 	if (> (apply #'search-term-relevance cliki page p) 0)
 	append (apply #'search-term-summary cliki page  p)))
 
-(defmethod search-term-relevance ((cliki cliki-instance) page
+(defmethod search-term-relevance ((cliki cliki-view) page
 				  (term (eql :and)) &rest args)
   (apply #'* (mapcar (lambda (x)
 		       (apply #'search-term-relevance cliki page x))
 		     args)))
 
-(defmethod search-term-summary ((cliki cliki-instance) page 
+(defmethod search-term-summary ((cliki cliki-view) page 
 				  (term (eql :and)) &rest args)
   (if (> (apply #'search-term-relevance cliki page term args) 0)
       (loop for p in args
 	    append (apply #'search-term-summary cliki page p))))
 
-(defmethod search-term-relevance ((cliki cliki-instance) page
+(defmethod search-term-relevance ((cliki cliki-view) page
 				  (term (eql :not)) &rest args)
   (- 1 (apply #'search-term-relevance cliki page (car args))))
 
-(defmethod search-term-summary ((cliki cliki-instance) page 
+(defmethod search-term-summary ((cliki cliki-view) page 
 				  (term (eql :not)) &rest args)
   nil)
 
-(defmethod search-term-relevance ((cliki cliki-instance) page
+(defmethod search-term-relevance ((cliki cliki-view) page
 				  (term (eql :body)) &rest args)
   (let ((doc-terms (page-tfidf page))
 	(terms (loop for word in (araneida:split (car args))
@@ -45,7 +45,7 @@
 	(document-vector-cosine terms doc-terms)
 	0)))
 
-(defmethod search-term-summary ((cliki cliki-instance) page 
+(defmethod search-term-summary ((cliki cliki-view) page 
 				(term (eql :body)) &rest args)
   (list
    (with-output-to-string (o)
@@ -70,7 +70,7 @@
 ;;; default method: for (foo "bar" "baz"), return 1 iff the search
 ;;; term is (foo "bar"), (foo "baz") or (foo)
 
-(defmethod search-term-relevance ((cliki cliki-instance) page
+(defmethod search-term-relevance ((cliki cliki-view) page
 				  term &rest args)
   (if
    (cond (args
@@ -81,13 +81,13 @@
 	 (t (assoc term (page-indices page))))
    1 0))
 
-(defmethod search-term-summary ((cliki cliki-instance) page 
+(defmethod search-term-summary ((cliki cliki-view) page 
 				  term &rest args)
   (if (> (apply #'search-term-relevance cliki page term args) 0)
       (list (format nil "<b>~A</b>: ~A<br>"
 		    term (car args)))))
 
-(defmethod search-results-blurb ((cliki cliki-instance) stream)
+(defmethod search-results-blurb ((cliki cliki-view) stream)
   nil)
 
 

@@ -1,6 +1,8 @@
 (in-package :CL-USER)
 (defpackage "CLIKI"
-  (:export cliki-view-handler cliki-edit-handler cliki-instance cliki-url-root
+  (:export cliki-view-handler cliki-edit-handler cliki-instance cliki-view
+	   cliki-url-root
+	   with-page-surround
 	   cliki-css-text cliki-pages cliki-page-header cliki-page-footer
 	   cliki-user-name short-forms
 

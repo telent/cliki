@@ -1,6 +1,6 @@
 (in-package :cliki)
 
-(defmethod cliki-css-text ((cliki cliki-instance) stream)
+(defmethod cliki-css-text ((cliki cliki-view) stream)
   (write-sequence "
 /*
  * cliki.css
@@ -138,8 +138,9 @@ pre
 " stream))
 
 (defun cliki-list-all-pages-handler (request)
-  (let* ((pages (loop for p being the hash-values of
-		      (cliki-pages (request-cliki request))
+  (let* ((cliki (request-cliki request))
+	 (pages (loop for p being the hash-values of
+		      (cliki-pages cliki)
 		      collect p)))
     (request-send-headers request)
     (write-sequence
@@ -152,7 +153,7 @@ pre
           ,@(mapcar
              (lambda (x)
                `(li ((a :href
-		      ,(urlstring (page-url x)))
+		      ,(urlstring (page-url cliki x)))
                      ,(page-title x))))
 	     pages)))))
      (request-stream request))))
@@ -176,7 +177,7 @@ pre
 		      (urlstring-unescape term))))))
 	(t `(:body ,term))))
 
-(defmethod format-search-relevance ((cliki cliki-instance) relevance)
+(defmethod format-search-relevance ((cliki cliki-view) relevance)
   (format nil "(~,01F% relevant)" (* relevance 100)))
 
 (defun cliki-search-handler (request)
@@ -191,42 +192,41 @@ pre
 	     (end (min (length results) (+ start 10)))
 	     (out (request-stream request)))
 	(request-send-headers request)
-	(cliki-page-header cliki request "Search results")
-	
-	(format out "<form action=\"~Aadmin/search\"> Search again: <input name=words size=60 value=~S></form>"
-		(urlstring (cliki-url-root cliki))
-		(html-escape
-		 (cond (error term)
-		       ((eql (car c-term) :body) (cadr c-term))
-		       (t (prin1-to-string c-term)))))
-	(cond
-	  (error
-	   (format out "Sorry, your search term could not be read<pre>~A</pre>" (html-escape (princ-to-string error))))
-	  (results
-	   (search-results-blurb cliki out)
-	   (format out "<p>~A result~:p found, showing results ~A to ~A.  " (length results) (1+ start)  end )
-	   (loop for (name . rel) in (subseq results start end)
-		 for j from start to end
-		 do (format out "~&<p>~A <b><a href=\"~A\">~A</a></b> ~A<br>~A"
-			    (1+ j)
-			    (urlstring (page-url name))
-			    (page-title name)
-			    (format-search-relevance cliki rel)
-			    (let ((s (page-summary cliki name c-term)))
-			      (if s
-				  (html
-				   `((div :style "margin-top: -5px; margin-left: 5%; font-size: 80%")
-				     ,@s))
-				  ""))
-			    ))
-	   (print-page-selector
-	    (request-stream request) start 10 (length results)
-	    (format nil "~A?words=~A&start="
-		    (url-path url)
-		    (urlstring-escape
-		     (format nil "~S" c-term)))))
-	  (t (format out "Sorry, no pages match your search term.")))
-	t))))
+	(with-page-surround (cliki request "Search results")
+	  (format out "<form action=\"~Aadmin/search\"> Search again: <input name=words size=60 value=~S></form>"
+		  (urlstring (cliki-url-root cliki))
+		  (html-escape
+		   (cond (error term)
+			 ((eql (car c-term) :body) (cadr c-term))
+			 (t (prin1-to-string c-term)))))
+	  (cond
+	    (error
+	     (format out "Sorry, your search term could not be read<pre>~A</pre>" (html-escape (princ-to-string error))))
+	    (results
+	     (search-results-blurb cliki out)
+	     (format out "<p>~A result~:p found, showing results ~A to ~A.  " (length results) (1+ start)  end )
+	     (loop for (name . rel) in (subseq results start end)
+		   for j from start to end
+		   do (format out "~&<p>~A <b><a href=\"~A\">~A</a></b> ~A<br>~A"
+			      (1+ j)
+			      (urlstring (page-url cliki name))
+			      (page-title name)
+			      (format-search-relevance cliki rel)
+			      (let ((s (page-summary cliki name c-term)))
+				(if s
+				    (html
+				     `((div :style "margin-top: -5px; margin-left: 5%; font-size: 80%")
+				       ,@s))
+				    ""))
+			      ))
+	     (print-page-selector
+	      (request-stream request) start 10 (length results)
+	      (format nil "~A?words=~A&start="
+		      (url-path url)
+		      (urlstring-escape
+		       (format nil "~S" c-term)))))
+	    (t (format out "Sorry, no pages match your search term.")))
+	  t)))))
 
 		     
 

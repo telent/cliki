@@ -1,8 +1,18 @@
 (in-package :cliki)
 
-;;; this becomes a method so that we can change the look and feel for
-;;; different clikis in the same image
-(defmethod cliki-page-header ((cliki cliki-instance) request title &optional head)
+(defmethod cliki-page-surround  ((cliki cliki-view) request function
+			     &key title head)
+  (cliki-page-header cliki request title head)
+  (prog1
+      (funcall function (request-stream request))
+    (cliki-page-footer cliki request title)))
+
+(defmacro with-page-surround ((cliki request title &optional head) &body forms)
+  `(cliki-page-surround ,cliki ,request
+			(lambda (out) ,@forms)
+			:title ,title :head ,head))
+  
+(defmethod cliki-page-header ((cliki cliki-view) request title &optional head)
   (let* ((stream (request-stream request))
          (home (cliki-url-root cliki)))
     (labels ((ahref (l) (urlstring (araneida:merge-url home l)))) 
@@ -38,7 +48,7 @@
                stream)))))
 
 (defmethod cliki-page-footer
-    ((cliki cliki-instance) request title)
+    ((cliki cliki-view) request title)
   (let* ((page (find-page cliki title))
 	 (out (request-stream request))
 	 (text
@@ -148,33 +158,33 @@
 
 
 (defgeneric html-for-keyword (cliki stream keyword &rest rest &key &allow-other-keys))
-(defmethod html-for-keyword ((cliki cliki-instance)
+(defmethod html-for-keyword ((cliki cliki-view)
 			     stream (keyword t) &rest args)
   (format stream "<b> [unrecognised ~A keyword occurred here: args ~S] </b>"
 	  keyword args))
 
-(defmethod html-for-keyword ((cliki cliki-instance)
+(defmethod html-for-keyword ((cliki cliki-view)
 			     stream (keyword (eql :error)) &rest args)
   (destructuring-bind (error form) args
     (format stream "<b> [Syntax error in tag: </b><br>~A<pre>~S</pre><b>] </b>"
 	    form (html-escape error))))
 
-(defmethod html-for-keyword ((cliki cliki-instance) stream
+(defmethod html-for-keyword ((cliki cliki-view) stream
 			     (keyword (eql :topic))
 			     &rest args &aux (arg (car args)))
   (write-a-href cliki arg stream))
 
-(defmethod html-for-keyword ((cliki cliki-instance) stream
+(defmethod html-for-keyword ((cliki cliki-view) stream
 			     (keyword (eql :link))
 			     &rest args &aux (arg (car args)))
   (write-a-href cliki arg stream))
 
-(defmethod html-for-keyword ((cliki cliki-instance) stream
+(defmethod html-for-keyword ((cliki cliki-view) stream
 			     (keyword (eql :legacy-search))
 			     &rest args &aux (arg (car args)))
   (legacy-search-result cliki arg stream))
 
-(defmethod html-for-keyword ((cliki cliki-instance) stream
+(defmethod html-for-keyword ((cliki cliki-view) stream
 			     (keyword (eql :search))
 			     &rest args)
   (destructuring-bind
@@ -200,7 +210,7 @@
 	     (format stream "</ul>"))
 	    (t (princ no-results-message stream))))))
 
-(defmethod html-for-keyword ((cliki cliki-instance) stream
+(defmethod html-for-keyword ((cliki cliki-view) stream
 			     (keyword (eql :clhs))
 			     &rest args &aux (arg (car args)))
   (let* ((url (hyperspec-url arg)))
@@ -210,27 +220,27 @@
 		url arg)
 	(princ arg stream))))
 
-(defmethod html-for-download-link ((cliki cliki-instance) stream
+(defmethod html-for-download-link ((cliki cliki-view) stream
 				   (from (eql :cclan)) name)
   (format stream
 	  "<a class=\"download\" href=\"http://ww.telent.net/cclan/~A\"
 ><b>Download CCLAN package ~A</b></a>"
 	  name name))
 
-(defmethod html-for-download-link ((cliki cliki-instance) stream
+(defmethod html-for-download-link ((cliki cliki-view) stream
 				   (from t) name)
   (format stream
 	  "<a class=\"download\" href=\"~A\"
 ><b>Download from ~A</b></a>"
 	  name name))
 
-(defmethod html-for-keyword ((cliki cliki-instance) stream
+(defmethod html-for-keyword ((cliki cliki-view) stream
 			     (keyword (eql :download))
 			     &rest args)
   (destructuring-bind (name &key (from :unknown) &allow-other-keys) args
     (html-for-download-link cliki stream from name)))
 
-(defmethod html-for-keyword ((cliki cliki-instance) stream
+(defmethod html-for-keyword ((cliki cliki-view) stream
 			     (keyword (eql :package))
 			     &rest args)
   (let ((merged
@@ -267,7 +277,7 @@
 
 ;; caller should unescape STRING if it needed it
 
-(defmethod write-a-href ((cliki cliki-instance) title stream)
+(defmethod write-a-href ((cliki cliki-view) title stream)
   "Write an A HREF element for the CLiki page TITLE.  STREAM may be an open stream or T or NIL, a la FORMAT"
   (let ((escaped (urlstring-escape title)))
     (if (find-page cliki title)

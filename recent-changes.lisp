@@ -39,38 +39,38 @@
 	   :junk-allowed t))
 	 (number 30))
     (request-send-headers request :last-modified (caar changes))
-    (cliki-page-header cliki request "Recent Changes")
-    (if (= start 0)
-	(format out
-		"<blockquote>This page is updated automatically.  There's also an RDF RSS feed at <a href=\"recent-changes.rdf\">~A</a> -- ~A"
-		(urlstring
-		 (merge-url (request-url request) "recent-changes.rdf"))
-		(write-a-href cliki "Daniel Barlow" nil))
-	(format out "<p>Older entries (starting at ~D)</p>~%" start))
-    (loop for (this-date title user . description)
-	  in (subseq changes start
-		     (min (+ start number) (length changes)))
-	  and old-date = 0 then this-date
-          if (and title description user)
-          unless (same-day-p this-date old-date)
-          do (with-date this-date 0
-               (format out
-                       "</blockquote>
+    (with-page-surround (cliki request "Recent Changes")
+      (if (= start 0)
+	  (format out
+		  "<blockquote>This page is updated automatically.  There's also an RDF RSS feed at <a href=\"recent-changes.rdf\">~A</a> -- ~A"
+		  (urlstring
+		   (merge-url (request-url request) "recent-changes.rdf"))
+		  (write-a-href cliki "Daniel Barlow" nil))
+	  (format out "<p>Older entries (starting at ~D)</p>~%" start))
+      (loop for (this-date title user . description)
+	    in (subseq changes start
+		       (min (+ start number) (length changes)))
+	    and old-date = 0 then this-date
+	    if (and title description user)
+	    unless (same-day-p this-date old-date)
+	    do (with-date this-date 0
+			  (format out
+				  "</blockquote>
 <a name=~D><h3>~/cliki:dayname/ ~A ~/cliki:monthname/ ~A</h3></a>
 <blockquote>"
-                       this-date day-of-week day-of-month month year))
-          if (and title description user)
-          do (with-date this-date 0
-			(format out "<br> ~D:~2,'0D <b>~A</b> : ~A -- ~A ~%"
-                       hour minute
-		       (if title (write-a-href cliki title nil) "?")
-                       (car description)
-                       (if user (write-a-href cliki user nil) ""))))
-    (princ "<p>" out)
-    (print-page-selector out start number (length changes)
-			 (format nil "~A?start="
-				 (url-path (request-url request))))
-    ))
+				  this-date day-of-week day-of-month month year))
+	    if (and title description user)
+	    do (with-date this-date 0
+			  (format out "<br> ~D:~2,'0D <b>~A</b> : ~A -- ~A ~%"
+				  hour minute
+				  (if title (write-a-href cliki title nil) "?")
+				  (car description)
+				  (if user (write-a-href cliki user nil) ""))))
+      (princ "<p>" out)
+      (print-page-selector out start number (length changes)
+			   (format nil "~A?start="
+				   (url-path (request-url request))))
+      )))
 
 (defun rdf-recent-changes (request)
   (let* ((out  (request-stream request))
