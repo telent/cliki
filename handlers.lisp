@@ -12,7 +12,7 @@
       (when (string= search-string actual)
         (return-from request-title actual))
       (request-redirect request
-                        (merge-url (request-url request) (urlstring-escape title)))
+                        (merge-url (request-url request) (urlstring-escape actual)))
       nil)))
 
 (defun cliki-get-handler (request arg-string root)
