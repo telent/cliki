@@ -14,16 +14,13 @@
 <form method=post>
 <textarea wrap=virtual name=text rows=20 cols=80>~%"
             title view-href)
-    (handler-case
-     (with-open-file (in (merge-pathnames title root) :direction :input)
-       ;; XXX copy-stream isn't good enough: we have to do something
-       ;; clever with bits of HTML (like, form elements) embedded in
-       ;; Lisp code, otherwise we leave the form forthwith
-       (araneida::copy-stream in out))
-     (file-error (e) ;; probably it just doesn't exist: not actually an error
-                 (declare (ignore e))
-                 (format out "Describe _(~A) here~%" title ))
-     (error (e) (format out "Describe _(~A) here~%~A~%" title e)))
+    (with-open-file (in (merge-pathnames title root) :direction :input
+			:if-does-not-exist nil)
+	;; XXX copy-stream isn't good enough: we have to do something
+	;; clever with bits of HTML (like, form elements) embedded in
+	;; Lisp code, otherwise we leave the form forthwith
+	(if in (araneida::copy-stream in out)
+	    (format out "Describe _(~A) here~%" title)))
     (format out "</textarea>
 <br><b>Summary of changes: <input type=text size=60 name=summary value=\"?\">
 <br><b>Your name: <input type=text size=30 name=name value=\"A N Other\">
