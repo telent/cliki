@@ -6,3 +6,10 @@ Look at the source for XXX ("fix me eventually") and TODO ("fix me soon")
 comments for things to do in support of those features.  You can use
 the supplied Perl script to do this for you: "perl TODO.pl *.lisp"
 
+----
+
+Categories and backlinks
+
+We're reaching the point that we need to persistently store a bunch of
+stuff about each page.  
+   
