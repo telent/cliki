@@ -12,9 +12,11 @@
 	       (:file "cliki-page" :depends-on ("cliki-page-class"))
 	       (:file "cliki-request-class" :depends-on ("defpackage"))
 	       (:file "cliki-request" :depends-on ("cliki-request-class"))
-	       #+nil
-               (:file "indexing"
-		      :depends-on ("cliki-instance" "cliki-request"))
+	       (:file "edit-handler-class" :depends-on ("defpackage"))
+	       (:file "edit-handler" :depends-on ("cliki-request-class"
+						  "cliki-page-class"
+						  "edit-handler-class"))
+
 	       (:file "index" :depends-on ("cliki-instance" "cliki-request"))
 	       (:file "hyperspec" :depends-on ("defpackage"))
                ;(:file "link-checker") :depends-on ("indexing"))
