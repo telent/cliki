@@ -29,7 +29,8 @@ intended for use as a FORMAT Tilde-slash function"
 
              
 (defun view-page (request title root)
-  (let ((out  (request-stream request)))
+  (let ((out  (request-stream request))
+        (pathname (merge-pathnames title root)))
     (request-send-headers request)
     (format out
             "<html><head><title>Cliki : ~A</title></head>
@@ -38,7 +39,7 @@ intended for use as a FORMAT Tilde-slash function"
 <h1>~A</h1>~%" title request title)
     (let ((categories
            (handler-case
-            (with-open-file (in (merge-pathnames title root) :direction :input)
+            (with-open-file (in pathname :direction :input)
               (write-stream-to-stream in out))
             (file-error (e)                    ;probably just doesn't exist
                         (declare (ignore e))
@@ -54,8 +55,11 @@ intended for use as a FORMAT Tilde-slash function"
           (add-page-to-category c title)
           (format out "~A &nbsp; "
                   (write-a-href c root nil)))))
-    (format out "<hr><a href=\"~A?edit\">Edit this page</a>"
-            (urlstring-escape title))))
+    (format out "<hr><a href=\"~A?edit\">Edit this page</a>
+ &nbsp; Last edit: ~A"
+            (urlstring-escape title)
+            (araneida::universal-time-to-rfc-date (file-write-date pathname))
+            )))
 
 (defun directory-for (pathname)
   (merge-pathnames (make-pathname :name :wild) pathname))
