@@ -60,8 +60,7 @@
 (defmethod handle-request-response ((handler edit-handler)
 				    (method (eql :get))
 				    request )
-  (let* ((out (request-stream request))
-	 (cliki (handler-cliki handler))
+  (let* ((cliki (handler-cliki handler))
 	 (auth-username (cliki-user-name cliki (request-user request)))
 	 (unauth-username (urlstring-unescape (request-cookie request "username"))))
     (multiple-value-bind (page title) (find-page-or-redirect cliki request)
@@ -72,7 +71,7 @@
       (with-page-surround (cliki request (format nil "Edit ``~A''" title)
 				 '(((meta :name "ROBOTS"
 				     :content "noindex,nofollow"))))
-	(format out "
+	(format cliki::out "
  <form method=post>
  <!-- textarea wrap=virtual name=text rows=20 cols=80 -->~%")
 	(let ((default (format nil "<input type=hidden name=T0 value=BODY>
@@ -100,8 +99,8 @@ Describe _(~A) here
  <br><input type=checkbox ~A name=rememberme > <b>Check this box to fill in your name automatically next time</b> (uses a cookie)
   <br><input type=submit value=Save name=Save></form></body></html>"
 		    (or unauth-username "A N Other")
-		    (if unauth-username "checked=checked" "")))
-	t))))
+		    (if unauth-username "checked=checked" ""))))
+      t)))
 
 
 (defun save-stream (cliki request pathname)
