@@ -7,6 +7,7 @@
        (request-send-headers request
                              :content-type "text/plain"
                              :expires (get-universal-time))
-       (araneida::copy-stream in out))
-     (error (e) ;; probably it just doesn't exist: not actually an error
-            (request-send-error request 404 "Can't send file: ~A" e)))))
+       (araneida::copy-stream in out)
+       t)
+      (error (e) ;; probably it just doesn't exist: not actually an error
+	(request-send-error request 404 "Can't send file: ~A" e)))))

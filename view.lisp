@@ -212,7 +212,7 @@
   (let ((escaped (urlstring-escape title)))
     (if (find-page cliki title)
         (format stream "<a class=\"internal\" href=\"~A\" >~A</a>" escaped title)
-      (format stream "~A<a class=\"internal\" href=\"~A?edit\" >?</a>" title escaped))))
+      (format stream "~A<a class=\"internal\" href=\"edit/~A\" >?</a>" title escaped))))
 
 (defun read-matched-parens (stream)
   "Read from STREAM until we have seen as many #\) as #\(, returning
