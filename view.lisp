@@ -12,8 +12,8 @@ intended for use as a FORMAT Tilde-slash function"
     `((table :width "100%")
       (tr
        (td ((a :href ,(urlstring home))
-            ((img :src "/cliki.png" :alt "[ Home ]"))))
-       (td "CLiki pages can be edited by anybody at any time.  Imagine the <i>most fearsomely comprehensive legal disclaimer you have ever seen</i>, and double it"))
+            ((img :border 0 :src "/cliki.png" :alt "[ Home ]"))))
+       (td "CLiki pages can be edited by anybody at any time.  Imagine a <i>scarily comprehensive legal disclaimer</i>"))
       (tr ((td :colspan 4) (hr)))))
    stream)))
 
@@ -47,6 +47,7 @@ intended for use as a FORMAT Tilde-slash function"
     (request-send-headers request)
     (format out
             "<html><head><title>Cliki : ~A</title></head>
+<link rel=\"stylesheet\" href=\"/dan.css\">
 <body>
 ~/cliki-html:titlebar/
 <h1>~A</h1>~%" title request title)
@@ -68,7 +69,7 @@ intended for use as a FORMAT Tilde-slash function"
           (add-page-to-category c title)
           (format out "~A &nbsp; "
                   (write-a-href c root nil)))))
-    (format out "<hr><a href=\"~A?edit\">Edit this page</a> | <a href=\"~A?source\">View page source</a> |  Last edit: ~A"
+    (format out "<hr><form action=\"http://loaclhost.telent.net/cgi-bin/htsearch\"><a href=\"~A?edit\">Edit this page</a> | <a href=\"~A?source\">View page source</a> |  Last edit: ~A | Search CLiki <input name=words size=20></form>"
             (urlstring-escape title) (urlstring-escape title)
             (araneida::aif (file-write-date pathname)
                  (araneida::universal-time-to-rfc-date araneida::it)
