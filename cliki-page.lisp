@@ -17,6 +17,22 @@
 (defmethod (setf page-pathname) (value (page cliki-page))
   (setf (slot-value page 'pathname) value))
 
+(defmethod googlable-version ((page cliki-page))
+  "The newest version which is more than 24 hours older than its successor.
+The successor of the latest version is the current time"
+  (block func
+    (let ((newer (get-universal-time)))
+      (dolist (v (page-versions page))
+	(let ((date (file-write-date (page-pathname page :version v))))
+	  (when (< date (- newer 86400)) (return-from func v))))
+      1)))
+
+(defmethod googlable-p ((page page) version)
+  (when (eql version :newest) (setf version (car (page-versions page))))
+  (= version (googlable-version page)))
+
+
+
 ;;; page last-modified times
 ;;; (1) a slot in cliki-page stores the last time that it was updated
 ;;; from within cliki 

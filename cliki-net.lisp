@@ -169,9 +169,12 @@ pre
 	  ,function
 	  ,@(if page
 		  `(((div :id "footer")
-		     ((a :href ,(format nil "edit/~A?v=~A"
-					(urlstring-escape title)
-					(request-for-version page request)))
+		     ((a :href 
+			 ,(if page (format nil "edit/~A?v=~A"
+					   (urlstring-escape title)
+					   (request-for-version page request))
+			      (format nil "edit/~A"
+				      (urlstring-escape title))))
 		      "Edit page")
 		     " | " 
 		     ((a :href ,(format nil "~A?source"

@@ -140,7 +140,7 @@ pre
   (let* ((cliki (request-cliki request))
 	 (pages (loop for p being the hash-values of
 		      (cliki-pages cliki)
-		      collect p)))
+		      when (page-pathname p) collect p)))
     (request-send-headers request)
     (html-stream
      (request-stream request)

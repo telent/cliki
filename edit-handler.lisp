@@ -124,6 +124,7 @@ _(topic markers) and remove this text
   <br><input type=submit value=Save name=Save></form></body></html>"
 		    (or unauth-username "A N Other")
 		    (if unauth-username "checked=checked" "")))
+	(format out "<p><b>Please note:</b> other readers will see your changes immediately, but external search engines will continue to see the old version for another 24 hours.  Spamming this site to improve your PageRank is therefore a particularly fruitless activity.<p>")
 	(let ((topics (loop for p being the hash-values of
 			    (cliki-pages cliki)
 			    append (car (page-index p :topic)))))

@@ -16,6 +16,8 @@
 	   compute-index-for-page add-to-index-for-page make-index-for-page
 	   search-term-relevance search-term-summary
 	   edit-handler
+
+	   check-page-save-allowed cliki-page-save-rejected
 	   
 	   elided-stream)
 	   

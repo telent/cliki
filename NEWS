@@ -1,11 +1,19 @@
 								-*- Text -*-
-New in CLiki 0.4.3
+
+New in CLiki 0.4.4 (not released)
+
+* Introduce anti-spamming device: all but one version of a page is now
+  served with NOFOLLOW robots tag.  That version is the newest version
+  which has lasted more than 24 hours (without|before) being edited
 
 * Bugfixes for new stuff in 0.4.3
 
 * RSS feed now includes a pubDate element, to make aggregators
   (primarily Planet Lisp, it must be admitted) happier
 
+* Export CHECK-PAGE-SAVE-ALLOWED (GF) and the condition 
+  CLIKI-PAGE-SAVE-REJECTED, making it easier for cliki-based apps
+  to do things like username checking
 
 New in CLiki 0.4.3
 
