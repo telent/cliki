@@ -126,9 +126,11 @@
 	(progn
 	  ;; we could remove the current page from the topic/links
 	  ;; here.  that might be a good idea
-	  (let* ((topics (page-topics page))
+	  (let* ((topics (remove page (page-topics page)))
 		 (backlinks
-		  (sort (set-difference (page-backlinks page) topics)
+		  (sort (set-difference
+			 (remove page (page-backlinks page))
+			 topics)
 			#'string-lessp :key #'page-title)))
 	    (write-page-contents-to-stream cliki page out)
 	    (when topics
