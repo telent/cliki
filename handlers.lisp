@@ -27,7 +27,8 @@ A.hyperspec { color: #442266 }
         (view-page-source request page title))
        ((string-equal action "download")
 	(request-redirect
-	 request (merge-url (request-url request) (download-url page))))
+	 request (merge-url (request-url request)
+			    (caar (page-index page  :download)))))
        ((string-equal action "edit")
         (edit-page request page title))
        ;; can add in other ops like delete etc
