@@ -1,6 +1,14 @@
 								-*- Text -*-
 New in CLiki 0.4.3
 
+* Bugfixes for new stuff in 0.4.3
+
+* RSS feed now includes a pubDate element, to make aggregators
+  (primarily Planet Lisp, it must be admitted) happier
+
+
+New in CLiki 0.4.3
+
 * Versioning!  At the expense of making the file names correspond even
   less closely with the page title, we now produce a version per edit.
 

@@ -178,6 +178,8 @@ _(topic markers) and remove this text
 	  (setf (gethash (canonise-title title) (cliki-pages cliki)) 
 		(cliki-load-page cliki pn)))
 	(update-idf cliki)
+	(loop for p being the hash-values of (cliki-pages cliki) 
+	      do (touch-page p))
 	title))))
 
 (defmethod handle-request-response ((handler edit-handler)

@@ -31,7 +31,7 @@
     (max lm d)))
 
 (defmethod touch-page ((page cliki-page))
-  (setf (page-last-modified page) (get-universal-time)))
+  (setf (slot-value page 'last-modified) (get-universal-time)))
 
 
     
