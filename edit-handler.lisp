@@ -124,32 +124,10 @@ Describe _(~A) here
   ;; preferably one that is vaguely like the page title)
   (remove #\. title))
 
-(defun save-page (cliki request page)
-  (let* ((filename (page-pathname page))
-	 (body (request-body request))
-	 (title (pathname-name filename))
-	 (title-filename (merge-pathnames
-			  (make-pathname :type "titles") filename)))
-    (save-stream cliki request (page-pathname page))
-    (with-open-file (out-file title-filename :direction :output)
-      (with-standard-io-syntax
-	(write (page-names page) :stream out-file)))
-    (add-recent-change cliki (get-universal-time) title
-		       (cliki-user-name
-			cliki (or (request-user request)
-				  (body-param "name" body)))
-		       (body-param "summary" body))
-    (setf (gethash (canonise-title title) (cliki-pages cliki)) page)
-    (update-page-indices cliki page)
-    (update-idf cliki)))
-
-(defmethod handle-request-response ((handler edit-handler)
-				    (method (eql :post))
-				    request )
+(defmethod save-page ((cliki cliki-instance) request)
   (multiple-value-bind (page title)
-      (find-page-or-redirect (handler-cliki handler) request)
-    (let* ((cliki (handler-cliki handler))
-	   (page
+      (find-page-or-redirect cliki request)
+    (let* ((page
 	    (or page
 		(make-instance 'cliki-page
 			       :title title :names (list title)
@@ -157,30 +135,53 @@ Describe _(~A) here
 			       (filename-for-title
 				(request-cliki request) title)
 			       :cliki cliki)))
-	   (out (request-stream request))
+	   (filename (page-pathname page))
 	   (body (request-body request))
-	   (cookie nil)
-	   (view-href (format nil "<a href=\"~A\">~A</a>"
-			      (urlstring (merge-url
-					  (cliki-url-root cliki)
-					  (request-path-info request)))
-			      title)))
-      (unless (request-user request)
-	(if (body-param "rememberme" body)
-	    (setf cookie (cliki-user-cookie
-			  cliki (body-param "name" body))))
-	(if (and (not (body-param "rememberme" body))
-		 (request-cookie request "username"))
-	    ;; cookie previously set; seems reasonable that unticking the box
-	    ;; should be interpreted as a request to clear it
-	    (setf cookie (cliki-user-cookie cliki nil))))
-      (handler-case
-	  (progn
-	    (save-page cliki request page))
-	(error (c)
-	  (request-send-error request 500 "Unable to save file: ~A" c))
-	(:no-error (c)
-	  (declare (ignorable c))
-	  (request-send-headers request :set-cookie cookie)
-	  (format out "Thanks for editing ~A.  You probably need to `reload' or `refresh' to see your changes take effect" view-href)))
-      t)))
+	   (title (pathname-name filename))
+	   (title-filename (merge-pathnames
+			    (make-pathname :type "titles") filename)) )
+      (save-stream cliki request (page-pathname page))
+      (with-open-file (out-file title-filename :direction :output)
+	(with-standard-io-syntax
+	  (write (page-names page) :stream out-file)))
+      (add-recent-change cliki (get-universal-time) title
+			 (cliki-user-name
+			  cliki (or (request-user request)
+				    (body-param "name" body)))
+			 (body-param "summary" body))
+      (setf (gethash (canonise-title title) (cliki-pages cliki)) page)
+      (update-page-indices cliki page)
+      (update-idf cliki)
+      title)))
+
+(defmethod handle-request-response ((handler edit-handler)
+				    (method (eql :post))
+				    request )
+  (let* ((cliki (handler-cliki handler))
+	 title
+	 (out (request-stream request))
+	 (body (request-body request))
+	 (cookie nil))
+    (unless (request-user request)
+      (if (body-param "rememberme" body)
+	  (setf cookie (cliki-user-cookie
+			cliki (body-param "name" body))))
+      (if (and (not (body-param "rememberme" body))
+	       (request-cookie request "username"))
+	  ;; cookie previously set; seems reasonable that unticking the box
+	  ;; should be interpreted as a request to clear it
+	  (setf cookie (cliki-user-cookie cliki nil))))
+    (handler-case
+	(setf title (save-page cliki request ))
+      (error (c)
+	(request-send-error request 500 "Unable to save file: ~A" c))
+      (:no-error (c)
+	(declare (ignorable c))
+	(request-send-headers request :set-cookie cookie)
+	(format out "Thanks for editing ~A.  You probably need to `reload' or `refresh' to see your changes take effect"
+		(format nil "<a href=\"~A\">~A</a>"
+			(urlstring (merge-url
+				    (cliki-url-root cliki)
+				    (request-path-info request)))
+			title))))
+    t))
