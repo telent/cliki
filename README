@@ -20,35 +20,14 @@ Use asdf with the system definition
 * Using it
 
 You need to create a cliki-instance object and install cliki-handler
-somewhere in your URL hierarchy.  For example
-
-(defvar *cliki-instance* nil)
-(setf *cliki-instance*
-      (make-instance 'cliki::cliki-instance
-                     :data-directory "/var/www/cliki/"
-                     :url-root (merge-url ww-url "/cliki/")))
-(install-handler *root-handler* *cliki-instance* 
-		 (merge-url ww-url "/cliki/") nil)
+somewhere in your URL hierarchy.  See example.lisp for, as the name
+suggests, an example.
 
 data-directory is where the data files will be created, so must be
-writable by the user who is running the CL instance.  It must contain
-the file admin/recent-changes.dat, which can initially be empty 
+writable by the user who is running the CL instance.
 
-If you would like to run multiple CLikis on the same server, you can
+If you would like to run multiple CLikis on the same listener, you can
 do that with multiple cliki-instances.  If you want them to have
 different look and feel, you can create a subclass of cliki-instance
-and specialize 
+and specialize various methods.
 
-(defmethod cliki:cliki-css-text ((cliki your-cliki-instance) stream)
- ...)
-
-and 
-
-(defmethod cliki:cliki-page-header
-    ((cliki your-cliki-instance) request title &optional head)
- ...)
-
-
-The customizability was added in the space of about two hours on one
-Sunday evening, and designed on the premise that it served my
-immediate need.  If it doesn't serve yours, I'm open to patches.
