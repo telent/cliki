@@ -114,9 +114,9 @@
 		  ()
 		  ("title" 
 		   ()
-		   ,(cliki-title cliki) " Recent Changes" 
-		   ("link" () ,(urlstring (cliki-url-root cliki)) "Recent%20Changes")
-		   ("description" () ,(cliki-title cliki) " Recent Changes" ))
+		   ,(cliki-title cliki) " Recent Changes" )
+		  ("link" () ,(urlstring (cliki-url-root cliki)) "Recent%20Changes")
+		  ("description" () ,(cliki-title cliki) " Recent Changes" )
 		  ,@items
 		  ("textinput" 
 		   () 
