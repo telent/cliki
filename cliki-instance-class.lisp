@@ -15,8 +15,7 @@
 		:initform '((#\_ :link)
 			    (#\* :topic)
 			    (#\/ :legacy-search)
-			    (#\# ((#\H :clhs)))
-			    (#\> :download)
+			    (#\# ((#\H :clhs)))			    
 			    (#\: :long-form)))))
 
 
