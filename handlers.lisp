@@ -1,7 +1,6 @@
 (in-package :cliki)
 
-(defun css-file-handler (request rest-of-url)
-  (request-send-headers request :content-type "text/plain")
+(defmethod cliki-css-text ((cliki cliki-instance) stream)
   (write-sequence
    "HTML { font-family: times,serif; } 
 BODY {  background-color: White }
@@ -11,7 +10,11 @@ H2 { font-size: 100% }
 DIV { margin-left: 5%; margin-right: 5% }
 A.internal { color: #0077bb }
 A.hyperspec { color: #442266 }
-" (request-stream request)))
+" stream))
+
+(defun css-file-handler (request rest-of-url)
+  (request-send-headers request :content-type "text/plain")
+  (cliki-css-text (request-cliki request) (request-stream request)))
 
 (defun cliki-get-handler (request arg-string)
   (multiple-value-bind (page title) (find-page-or-redirect request)
@@ -75,7 +78,7 @@ A.hyperspec { color: #442266 }
 	 (end (min (length results) (+ start 10)))
 	 (out (request-stream request)))
     (request-send-headers request)
-    (send-cliki-page-preamble request "Search results")
+    (cliki-page-header cliki request "Search results")
 
     (format out "<form action=\"~Aadmin/search\"> Search again: <input name=words size=20 value=~S></form>"
 	    (urlstring (cliki-url-root cliki)) words)
