@@ -1,6 +1,7 @@
 (in-package :cliki)
 
-;;; search for stuff
+;;; search for stuff.  This is the /(...) searching: the full-text search
+;;; is in index.lisp
 
 ;;; XXX this shows all the signs of wanting to be a
 ;;; multiply-dispatched method on (attribute match)
@@ -60,7 +61,7 @@ CASE-SENSITIVE is (or t nil)"
 	     (sort 
 	      (loop for page being the hash-values of (cliki-pages cliki)
 		    if (member term (page-names page) :test pred)
-		    append (page-categories page))
+		    append (page-topics page))
 	      #'string-lessp
 	      :key #'page-title)))))
 
