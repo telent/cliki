@@ -27,9 +27,10 @@ The successor of the latest version is the current time"
 	  (when (< date (- newer 86400)) (return-from func v))))
       1)))
 
-(defmethod googlable-p ((page page) version)
+(defmethod googlable-p ((page cliki-page) version)
   (when (eql version :newest) (setf version (car (page-versions page))))
-  (= version (googlable-version page)))
+  (and (page-pathname page)
+       (= version (googlable-version page))))
 
 
 

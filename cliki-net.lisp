@@ -187,7 +187,7 @@ pre
 	  (p "CLiki pages can be edited by anyone at any time.  Imagine a fearsomely comprehensive disclaimer of liability.  Now fear, comprehensively")
 	  ))))))
 
-(defparameter *blacklist* (cl-ppcre:create-scanner "interseo|transwell|navinic|activeshow|sba.com.cn"))
+(defparameter *blacklist* (cl-ppcre:create-scanner "interseo|transwell|navinic|activeshow|sba.com.cn|konseptech.com"))
 
 (defmethod check-page-save-allowed ((cliki cliki-net) page version user)
   (call-next-method) 
