@@ -9,6 +9,12 @@
 			args)) 2))
 
 (defmethod search-term-relevance ((cliki cliki-instance) page
+				  (term (eql :and)) &rest args)
+  (apply #'* (mapcar (lambda (x)
+		       (apply #'search-term-relevance cliki page x))
+		     args)))
+
+(defmethod search-term-relevance ((cliki cliki-instance) page
 				  (term (eql :not)) &rest args)
   (- 1 (apply #'search-term-relevance cliki page (car args))))
 
