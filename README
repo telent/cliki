@@ -30,9 +30,9 @@ somewhere in your URL hierarchy.  For example
 (install-handler *root-handler* *cliki-instance* 
 		 (merge-url ww-url "/cliki/") nil)
 
-Note that data-directory must be writable by the user who is running
-the CL instance
-
+data-directory is where the data files will be created, so must be
+writable by the user who is running the CL instance.  It must contain
+the file admin/recent-changes.dat, which can initially be empty 
 
 If you would like to run multiple CLikis on the same server, you can
 do that with multiple cliki-instances.  If you want them to have
