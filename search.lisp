@@ -28,15 +28,16 @@ CASE-SENSITIVE is (or t nil)"
 (defun inverted-search-predicate (match case-p)
   (cond
    ((and (eql match :substring) case-p)
-    (lambda (term x) (search term x :test #'char/=)))
+    (lambda (term x) (not (search term x))))
    ((eql match :substring) 
-    (lambda (term x) (search term x :test #'char-not-equal)))
+    (lambda (term x) (not (search term x :test #'char-equal))))
    ((and (eql match :exact) case-p)
     #'string/=)
    ((eql match :exact)
     #'string-not-equal)
    (t (search-error "Unknown search match criterion"))))
-                             
+
+
 (defun search-page-titles (term pathname match case-sensitive)
   (let ((all-titles (mapcar #'pathname-name (directory pathname))))
     (remove term all-titles
