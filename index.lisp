@@ -82,9 +82,8 @@
 				   (source-page cliki-page)
 				   (index-name (eql :topic)) index)
   (loop for target-page being the hash-values of (cliki-pages cliki)
-	for k = (canonise-title (page-title target-page))
-	
-	if (member target-page index)
+	if (member
+	    target-page index :key (lambda (x) (find-page cliki (car x))))
 	do (pushnew source-page (page-topics target-page))
 	else do (setf (page-topics target-page)
 		      (remove source-page (page-topics target-page))))
@@ -94,9 +93,8 @@
 				   (source-page cliki-page)
 				   (index-name (eql :link)) index)
   (loop for target-page being the hash-values of (cliki-pages cliki)
-	for k = (canonise-title (page-title target-page))
-	
-	if (member target-page index)
+	if (member
+	    target-page index :key (lambda (x) (find-page cliki (car x))))
 	do (pushnew source-page (page-backlinks target-page))
 	else do (setf (page-backlinks target-page)
 		      (remove source-page (page-backlinks target-page))))
