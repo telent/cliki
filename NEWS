@@ -1,0 +1,13 @@
+New in CLiki 0.3
+
+* Hyperspec lookups (thanks to Eric Marsden for the code)
+
+* A full-text search engine (thanks to Neil W. Van Dyke for
+  introducing me to tfidf and pointing me at articles)
+
+* Multiple CLiki instances can co-exist in the same Lisp instance
+
+* Recent Changes view is now paged for speed of downloading
+
+* Can optionally use a cookie to remember the editors' names
+
