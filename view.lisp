@@ -88,7 +88,8 @@ intended for use as a FORMAT Tilde-slash function"
 		    "Some error occured: <pre>~A</pre>" e)))
 	(format out
 		"This page doesn't exist yet.  Please create it if you want to"))
-    (format out "<hr><form action=\"/cliki/admin/search\"><a href=\"~A?edit\">Edit this page</a> | <a href=\"~A?source\">View page source</a> |  Last edit: ~A | <a href=\"CLiki+Search\"> Search CLiki</a> <input name=words size=20></form>"
+    (format out "<hr><form action=\"~Aadmin/search\"><a href=\"~A?edit\">Edit this page</a> | <a href=\"~A?source\">View page source</a> |  Last edit: ~A | <a href=\"CLiki+Search\"> Search CLiki</a> <input name=words size=20></form>"
+	    (urlstring (cliki-url-root cliki))
             (urlstring-escape title) (urlstring-escape title)
             (if page
 		(file-write-date (page-pathname page))
