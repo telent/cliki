@@ -1,4 +1,17 @@
 								-*- Text -*-
+New in CLiki 0.4.2
+
+* Now depends on xmls package for rss generation (oh, stop whinging.
+  It's only small, it's asdf-installable if you ignore the lack of
+  GPG key, and it decruftifies the code noticeable)
+
+* Update README to include web address for lispweb list
+
+* 'Create new page' link to site root fixed (pointed out by Erik Enge,
+  patch from Ivan Toshkov, thanks both)
+
+* example.lisp package name changed to something less clashable
+
 New in CLiki 0.4.1
 
 * Fixed up a couple of links in the default page header/footer to

@@ -74,60 +74,68 @@
 				   (url-path (request-url request))))
       )))
 
+(defun rss-recent-changes-stream (cliki stream)
+  (let ((seen-titles nil)
+	(changes (cliki-recent-changes cliki)))
+    (labels ((datefmt (date)
+	       (with-date date 0
+			  (format nil "~/cliki:dayname/ ~A ~/cliki:monthname/" 
+				  day-of-week day-of-month month))))
+      (loop for (date title user . description)
+	    in changes
+	    if (> (length seen-titles) 15) return nil end
+	    if (assoc title seen-titles :test #'string=)
+	    do (incf (fourth (assoc title seen-titles :test #'string=)))
+	    else
+	    do (push (list title date description 1) seen-titles)
+	    end)
+      (let ((items
+	     (loop for (title date description edits)
+		   in (nreverse seen-titles)
+		   for f-date = (datefmt date)
+		   for descr = (if (> edits 1)
+				   (format nil "~A edits" edits)
+				   (car description))
+		   for url = (urlstring (merge-url (cliki-url-root cliki)
+						   (urlstring-escape title)))
+		   collect `("item" () 
+				    ("title" () ,f-date " : " ,title" : " ,descr)
+				    ("link" ()  ,url)))))
+	(xmls:write-xml
+	 `("rss" (("version" "0.92"))
+		 ("channel"
+		  ()
+		  ("title" 
+		   ()
+		   ,(cliki-title cliki) " Recent Changes" 
+		   ("link" () ,(urlstring (cliki-url-root cliki)) "Recent%20Changes")
+		   ("description" () ,(cliki-title cliki) " Recent Changes" ))
+		  ,@items
+		  ("textinput" 
+		   () 
+		   ("title" () ,(cliki-title cliki) " Search")
+		   ("description" () "Search all pages")
+		   ("name" () "words")
+		   ("link" () ,(urlstring (cliki-url-root cliki))
+			   "admin/search"))))
+       	 stream)
+	t))))
+
 (defun rdf-recent-changes (request)
   (let* ((out  (request-stream request))
 	 (cliki (request-cliki request))
-	 (seen-titles nil)
 	 (changes (cliki-recent-changes cliki)))
     (request-send-headers request :content-type "text/xml"
+			  ;:conditional t
 			  :last-modified (caar changes))
-    (format out "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>
-<rss version=\"0.92\">
-  <channel>
-    <title>~A Recent Changes</title>
-    <link>~ARecent%20Changes</link>
-    <description>~A Recent Changes</description>
-"
-	    (cliki-title cliki) 
-	    (urlstring (cliki-url-root cliki))
-	    (cliki-title cliki))
-    (loop for (date title user . description)
-	  in changes
-	  if (> (length seen-titles) 15) return nil end
-          if (assoc title seen-titles :test #'string=)
-	  do (incf (fourth (assoc title seen-titles :test #'string=)))
-	  else
-	  do (push (list title date description 1) seen-titles)
-	  end)
-    (loop for (title date description edits)
-	  in (nreverse seen-titles)
-          do (with-date date nil
-			(format out "<item><title>~/cliki:dayname/ ~A ~/cliki:monthname/ ~A : ~A</title>~%      <link>~A</link></item>~%"
-				day-of-week day-of-month month
-				title
-				(if (> edits 1)
-				    (format nil "~A edits" edits)
-				    (car description))
-				(urlstring
-				 (merge-url
-				  (cliki-url-root cliki)
-				  (urlstring-escape title))))))
-    (format out "<textinput>
-<title>~A Search</title>
-<description> Search all pages</description>
-<name>words</name>
-<link>~Aadmin/search</link>
-</textinput>
-</channel>
-</rss>"
-	    (cliki-title cliki)
-	    (urlstring (cliki-url-root cliki)))
-    t))
+    (rss-recent-changes-stream cliki out)))
 
 (defun sexp-recent-changes (request)
   (let* ((out  (request-stream request))
 	 (cliki (request-cliki request))
 	 (changes (cliki-recent-changes cliki)))
-    (request-send-headers request :content-type "text/plain")
+    (request-send-headers request :content-type "text/plain"
+			  :conditional t
+			  :last-modified (caar changes))
     (print (subseq changes 0 200) out)
     t))

@@ -31,3 +31,22 @@ do that with multiple cliki-instances.  If you want them to have
 different look and feel, you can create a subclass of cliki-instance
 and specialize various methods.
 
+
+* For help
+
+Araneida and CLiki users are encouraged to subscribe to the lispweb
+mailing list: configuration problems and questions are welcome there.
+
+ http://www.red-bean.com/lispweb/
+
+
+Paid support is also available if you're considering using this
+software in a commercial setting.  For details see 
+
+ http://web.metacircles.com/Support
+
+
+* ObPayPal
+
+This is Free Software yadda yadda yadda speech != beer yadda yadda
+http://ww.telent.net/donate.html blah blah blah

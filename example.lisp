@@ -1,5 +1,5 @@
-(defpackage "FOO" (:use "CL" "ARANEIDA" "CLIKI" "SB-EXT"))
-(in-package :foo)
+(defpackage "MY-CLIKI" (:use "CL" "ARANEIDA" "CLIKI" "SB-EXT"))
+(in-package :my-cliki)
 
 (defun my-fqdn ()
   (sb-bsd-sockets:host-ent-name 
