@@ -61,8 +61,6 @@
 #|
 (with-input-from-string (i " one of _(these) and *(two) of *(those) ")
   (grep-stream-for-links i '(#\_ #\*)))
-|#
 
-#|
 (create-indexes "/var/www/cliki/")
 |#
