@@ -168,7 +168,7 @@
 			     &rest args)
   (destructuring-bind
 	(&key title
-	      (no-results-message "Exhibitors not listed")
+	      (no-results-message "No results from search")
 	      term show-relevance-p &allow-other-keys) args
     (let ((pages
 	   (sort 
