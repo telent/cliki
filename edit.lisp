@@ -8,7 +8,8 @@
                            (request-path-info request) title)))
     (request-send-headers request :expires (get-universal-time))
     (format (request-stream request)
-            "<html><head><title>Cliki : Edit ``~A''</title></head>
+            "<html><head><title>Cliki : Edit ``~A''</title>
+<meta name=\"ROBOTS\" content=\"noindex,nofollow\"></head>
 <body><h1>Edit ``~A''</h1>
 <form method=post>
 <textarea wrap=virtual name=text rows=20 cols=80>~%"
