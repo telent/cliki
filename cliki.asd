@@ -31,7 +31,6 @@
 		      :depends-on ("cliki-instance"  "cliki-request"))
                (:file "view-source"
 		      :depends-on ("cliki-instance" "cliki-request"))
-               (:file "edit" :depends-on ("recent-changes" "cliki-page-class"))
                (:file "buffered-output-stream-class"
 		      :depends-on ("defpackage"))
 	       (:file "buffered-output-stream" :depends-on

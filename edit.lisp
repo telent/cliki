@@ -40,60 +40,6 @@
   ;; preferably one that is vaguely like the page title)
   (remove #\. title))
 
-(defun save-page (request page title)
-  (unless page
-    (setf page (make-instance 'cliki-page
-			      :title title
-			      :names (list title)
-			      :filename
-			      (filename-for-title (request-cliki request)
-						  title)
-			      :cliki (request-cliki request))))
-  (let* ((filename (page-pathname page))
-	 (title-filename (merge-pathnames
-			  (make-pathname :type "titles")
-			  (page-pathname page)))
-	 (cliki (request-cliki request))
-         (out (request-stream request))
-         (body (request-body request))
-	 (cookie nil)
-         (view-href (format nil "<a href=\"~A\">~A</a>"
-                            (request-path-info request) title)))
-    (if (body-param "rememberme" body)
-	(setf cookie
-	      (format nil "username=~A; path=~A; expires=~A; domain=~A"
-		      (urlstring-escape (body-param "name" body))
-		      (url-path (cliki-url-root cliki))
-		      "Sun, 01-Jun-2036 00:00:01 GMT"
-		      (url-host (cliki-url-root cliki)))))
-    
-    (if (and (not (body-param "rememberme" body))
-	     (request-header request :Cookie))
-	;; cookie previously set; seems reasonable that unticking the box
-	;; should be interpreted as a request to clear it
-	(setf cookie
-	      (format nil "username=; path=~A; expires=~A; domain=~A"
-		      (url-path (cliki-url-root cliki))
-		      "Mon, 32-Jul-2001 00:00:01 GMT"
-		      (url-host (cliki-url-root cliki)))))
-    (handler-case
-	(progn
-	  (with-open-file (out-file filename :direction :output)
-	      (write-sequence (body-param "text" body) out-file))
-	  (with-open-file (out-file title-filename :direction :output)
-	      (with-standard-io-syntax
-		(write (page-names page) :stream out-file))))
-      (error (c) (request-send-error request 500 "Unable to save file: ~A" c))
-      (:no-error (c)
-	(declare (ignorable c))
-	(add-recent-change cliki (get-universal-time) title
-			   (body-param "name" body)
-			   (body-param "summary" body))
-	(request-send-headers request :set-cookie cookie)
-	(format out "Thanks for editing ~A.  You probably need to `reload' or `refresh' to see your changes take effect" view-href)))
-    ;; XXX should do aliases here too
-    (setf (gethash (canonise-title title) (cliki-pages cliki)) page)
-    (update-page-indices cliki page)
-    (update-idf cliki)))
+
 
 
