@@ -58,9 +58,10 @@
 		    (loop 
 		     (setf c (read-char in-stream nil nil))
 		     (when (and (not in-tag)
-				(or (not c) (eql c #\.))) (return))
+				(or (not c)
+				    (not (graphic-char-p c))
+				    (eql c #\.))) (return))
 		     (if (and (not in-tag) (eql c #\<)) (setf in-tag t))
-		     (unless (graphic-char-p c) (setf c #\Space))
 		     (unless in-tag (princ c o))
 		     (if (and in-tag (eql c #\>)) (setf in-tag nil))))))
 	  (file-position in-stream start)) ; rewind

@@ -1,4 +1,13 @@
 								-*- Text -*-
+New in CLiki 0.4.3
+
+* While indexing we collect the first sentence of each page, and
+  make it accessible as (CLIKI-FIRST-SENTENCE page)
+
+* Legacy searches now print this out
+
+* *(Uncategorized) marker added to default text for new pages.
+
 New in CLiki 0.4.2
 
 * Now depends on xmls package for rss generation (stop complaining at

@@ -109,9 +109,12 @@ _(topic markers) and remove this text
 	(let ((topics (loop for p being the hash-values of
 			    (cliki-pages cliki)
 			    append (car (page-index p :topic)))))
-	  (format out "Current topic markers: ~{~A~^ | ~} "
-		  (sort (remove-duplicates topics :test #'string-equal)
-			:test #'string-lessp))))
+	  (format out "<small><b>Current <a href=\"~Atopic%20markers\">topic markers</a>:</b> ~{~A~^ | ~} </small>"
+		  (urlstring (cliki-url-root cliki))
+		  (mapcar 
+		   (lambda (x) (write-a-href cliki x nil))
+		   (sort (remove-duplicates topics :test #'string-equal)
+			 #'string-lessp)))))
       t)))
 
 
