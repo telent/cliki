@@ -207,12 +207,26 @@
 		url arg)
 	(princ arg stream))))
 
+(defmethod html-for-download-link ((cliki cliki-instance) stream
+				   (from (eql :cclan)) name)
+  (format stream
+	  "<a class=\"download\" href=\"http://ww.telent.net/cclan/~A\"
+><b>Download CCLAN package ~A</b></a>"
+	  name name))
+
+(defmethod html-for-download-link ((cliki cliki-instance) stream
+				   (from t) name)
+  (format stream
+	  "<a class=\"download\" href=\"~A\"
+><b>Download from ~A</b></a>"
+	  name name))
+
 (defmethod html-for-keyword ((cliki cliki-instance) stream
 			     (keyword (eql :download))
-			     &rest args &aux (arg (car args)))
-  (format stream
-	  "<a class=\"download\" href=\"~A\"><b>Download from ~A</b></a>"
-	  arg arg))
+			     &rest args)
+  (destructuring-bind (name &key (from :unknown) &allow-other-keys) args
+    (html-for-download-link cliki stream from name)))
+
 
 
 (defun legacy-search-result (cliki string stream)

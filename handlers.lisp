@@ -77,6 +77,8 @@ A.hyperspec { color: #442266 }
 	  (error
 	   (format out "Sorry, your search term could not be read<pre>~A</pre>" (html-escape (princ-to-string error))))
 	  (results
+	   (search-results-blurb cliki out)
+	   (format out "<p>~A results found, showing results ~A to ~A.  " (length results) (1+ start)  end )
 	   (loop for (name . rel) in (subseq results start end)
 		 for j from start to end
 		 do (format out "~&<p>~A <b><a href=\"~A\">~A</a></b> ~A<br>~A"
@@ -84,7 +86,7 @@ A.hyperspec { color: #442266 }
 			    (urlstring (page-url name))
 			    (page-title name)
 			    (format-search-relevance cliki rel)
-			    (let ((s (page-summary cliki name)))
+			    (let ((s (page-summary cliki name c-term)))
 			      (if s
 				  (format nil "<div style=\"margin-top: -5px; margin-left: 5%; font-size: 80%\">~A</div>~%"
 					  s)

@@ -41,10 +41,8 @@
 	 (t (assoc term (page-indices page))))
    1 0))
 
-
-
-
-
+(defmethod search-results-blurb ((cliki cliki-instance) stream)
+  nil)
 
 
 ;;; old search for stuff.  This is the /(...) searching: the full-text

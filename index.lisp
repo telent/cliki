@@ -75,6 +75,13 @@
 				  (index-name t) index fulltext-fn arguments)
   (cons arguments index))
 
+(defmethod add-to-index-for-page ((cliki cliki-instance) (page cliki-page)
+				  (index-name (eql :clhs)) index
+				  fulltext-fn arguments)
+  (dolist (w arguments)
+    (funcall fulltext-fn w 3))
+  (call-next-method))
+
 ;;; this is a crap name.  should be something like 'finalize', but not
 ;;; that word exactly because it has been stolen from general use by GC
 
@@ -126,9 +133,8 @@
 	"but" "not" "will" "use" "from" "there" "for" "and"
 	"any" "are" "which" "etc" "them")) 
 
-;;; conceivably we might want to allow numbers or something as word
-;;; constituents
-(defun word-char-p (c) (alpha-char-p c))
+;;; Is this the best selection of word constituents?
+(defun word-char-p (c) (or (alpha-char-p c) (digit-char-p c)))
 
 (defun interesting-word-p (word)
   (not (or (< (length word) 3)

@@ -39,7 +39,7 @@
 	   (or (car (url-query-param (request-url request) "start")) "0")
 	   :junk-allowed t))
 	 (number 30))
-    (request-send-headers request)
+    (request-send-headers request :last-modified (caar changes))
     (cliki-page-header cliki request "Recent Changes")
     (if (= start 0)
 	(format out
@@ -78,7 +78,8 @@
 	 (cliki (request-cliki request))
 	 (seen-titles nil)
 	 (changes (cliki-recent-changes cliki)))
-    (request-send-headers request :content-type "text/xml")
+    (request-send-headers request :content-type "text/xml"
+			  :last-modified (caar changes))
     (format out "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>
 <rss version=\"0.92\">
   <channel>

@@ -1,5 +1,5 @@
 (in-package :cliki)
-
+(defmethod cliki-default-page-name ((cliki cliki-instance)) nil "index")
 (defmethod find-page-or-redirect ((cliki cliki-instance)
 				  (request request))
   (let* ((string (urlstring-unescape (request-path-info request)))
@@ -9,7 +9,7 @@
          (actual (find-page cliki
 			    (if (> (length search-string) 0)
 				search-string
-				"index"))))
+				(cliki-default-page-name cliki)))))
     (cond
       ((not actual)			; no page found
        (values nil search-string))

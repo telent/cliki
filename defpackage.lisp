@@ -7,7 +7,7 @@
 	   compute-index-for-page add-to-index-for-page make-index-for-page
 	   search-term-relevance
 	   edit-handler)
-  (:use "NET.TELENT.DATE" "COMMON-LISP" "ARANEIDA" "SOCKETS"))
+  (:use "NET.TELENT.DATE" "COMMON-LISP" "ARANEIDA" "SOCKETS" "SB-GRAY"))
 
 ;;; language for inline searches and stuff
 (defpackage "CLIKI-PAGES" (:use #| nil |# ))

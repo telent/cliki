@@ -63,7 +63,7 @@ is set by update-page-indices (at startup and after edits).  "
     (install-handler cliki
 		     (lambda (request)
 		       (request-send-headers request
-					     :content-type "text/plain")
+					     :content-type "text/css")
 		       (cliki-css-text cliki (request-stream request))
 		       t)
 		     "admin/cliki.css" t)
@@ -75,6 +75,11 @@ is set by update-page-indices (at startup and after edits).  "
     (install-handler cliki `(sexp-recent-changes) "recent-changes.sexp" t)
     (install-handler cliki `(view-recent-changes) "Recent+Changes" t)
   ))
+
+(defmethod render-html (request
+			(cliki cliki-instance) (handler araneida::handler)
+			html-tree )
+  (html-stream (request-stream request) html-tree))
 
 (defmethod handle-request-authentication ((handler cliki-instance)
 					  method request)

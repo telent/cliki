@@ -12,27 +12,25 @@ use net.telent.date
 We need to be able to edit a page's aliases, which involves UI design
 of some kind.  Another box on the edit page?
 
-search syntax for the cmucl/sbcl bug db
-
-access control
-
-
 * CLiki
 ** funny chars in page names 
 ** topic synonyms, UI for
+
+these would be really good for using cliki as backend half of a
+brainstorming tool, where having to stop and think about what a page
+should be called inhibits the creative flow, and we'd rather just give
+it some arbitrary unique name and let people assign user-visible
+titles later.  Need UI for titles ...
+
+If titles can be changed, and if titles are exposed in URLs (I think
+they should be), we have that whole urls-should-persist issue to deal
+with.  Might just punt on this by telling people to be careful, though.
+
 ** read-only/authenticated version
-  - produce cookie based on username and some kind of secret
-
-  need to continue to support the crrent workflow too, btw
-
-  - check cookie in authentication handler
+  - some of this is done for entomotomy already
   - add some kind of acl to each page, inheriting sensibly from, um,
      some other page (what other page?)
   - access rights are :view, :edit, :comment  (append-only)
-
-for non-trivial authiz handlers we need UI changes to get the details
-when an unauthenticated request comes in: don't want to let people do
-their edits _before_ telling them they don't have the rights to save.
 
 so, authentication and authorization handlers on the edit-handler.
 But we don't bother authenticating if the page access perms say that 
@@ -50,9 +48,7 @@ we also need to store the user group data
 
 somehow we need a policy for edit perms on new pages
 
-ideally also we need a UI for changing it.  and titles.  
-
-
+ideally also we need a UI for changing it.
 
 ** Can we use cliki as a photo manager?
 
@@ -64,4 +60,10 @@ ideally also we need a UI for changing it.  and titles.
   could be used as a diary): should also accept a human-readable title
   so that collections can have associated rdf files
 
+** what about TODO lists
+
+requirements: 
+represent "w depends on z"
+generate list of stuff in which each item is represented
+this would be useful stuff for entomotomy too, actually.
 

@@ -91,7 +91,7 @@
 	  (add-recent-change cliki (get-universal-time) title
 			     (cliki-user-name
 			      cliki (or (request-user request)
-					(request-cookie request "username")))
+					(body-param "name" body)))
 			     (body-param "summary" body))
 	  (request-send-headers request :set-cookie cookie)
 	  (format out "Thanks for editing ~A.  You probably need to `reload' or `refresh' to see your changes take effect" view-href)))

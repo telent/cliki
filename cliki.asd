@@ -9,15 +9,18 @@
 	       (:file "cliki-instance-class" :depends-on ("defpackage"))
 	       (:file "cliki-instance" :depends-on ("cliki-instance-class"))
 	       (:file "cliki-page-class" :depends-on ("defpackage"))
-	       (:file "cliki-page" :depends-on ("cliki-page-class"))
+	       (:file "cliki-page" :depends-on ("cliki-page-class" "cliki-instance-class"))
 	       (:file "cliki-request-class" :depends-on ("defpackage"))
-	       (:file "cliki-request" :depends-on ("cliki-request-class"))
+	       (:file "cliki-request" :depends-on
+		      ("cliki-instance-class" "cliki-request-class"))
 	       (:file "edit-handler-class" :depends-on ("defpackage"))
 	       (:file "edit-handler" :depends-on ("cliki-request-class"
 						  "cliki-page-class"
 						  "edit-handler-class"))
 
-	       (:file "index" :depends-on ("cliki-instance" "cliki-request"))
+	       (:file "index"
+		      :depends-on ("cliki-page" "cliki-instance"
+						"cliki-request"))
 	       (:file "hyperspec" :depends-on ("defpackage"))
                ;(:file "link-checker") :depends-on ("indexing"))
                (:file "view" :depends-on
@@ -26,8 +29,13 @@
 		      :depends-on ("cliki-instance"  "cliki-request"))
                (:file "view-source"
 		      :depends-on ("cliki-instance" "cliki-request"))
-               (:file "edit" :depends-on ("recent-changes"))
-               (:file "search" :depends-on ("index"))
+               (:file "edit" :depends-on ("recent-changes" "cliki-page-class"))
+               (:file "buffered-output-stream-class"
+		      :depends-on ("defpackage"))
+	       (:file "buffered-output-stream" :depends-on
+		      ("buffered-output-stream-class"))
+               (:file "elided-stream" :depends-on ("buffered-output-stream"))
+               (:file "search" :depends-on ("index" "elided-stream"))
                (:file "handlers" :depends-on
                       ("view" "index" "view-source" "edit" "search"))
 	       (:static-file "TODO")
