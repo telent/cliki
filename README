@@ -4,4 +4,23 @@ Interactive user-updatable web pages a la wiki (http://www.c2.com/cgi/wiki)
 
 See the live CLiki at http://ww.telent.net/cliki/
 
+Prerequsite: araneida (http://araneida.telent.net/) and all that that
+implies.
+
+To make it work, 
+
+1) build it using the system definition (or the Makefile, which calls
+ it)
+2) get an araneida instance going
+3) evaluate something like
+
+  (cliki::export-handlers (merge-url araneida-examples::*static-url* "/cliki/")
+                          *cliki-source-pathname*))
+
+where *cliki-source-pathname* is the writable directory where you want
+the data stored
+
+4) there you go.  Enjoy.  Post a note on http://ww.telent.net/cliki/CLiki
+to let people know how you got on
+
 
