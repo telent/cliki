@@ -107,7 +107,8 @@ is set by update-page-indices (at startup and after edits).  "
      (cond
        (page
 	(request-send-headers request :last-modified 
-			      (file-write-date (page-pathname page))))
+			      (file-write-date (page-pathname page)))
+	t)
        (t nil)))))
    
 (defmethod handle-request-response ((handler cliki-instance)
