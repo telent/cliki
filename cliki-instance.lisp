@@ -2,9 +2,13 @@
 
 (defun canonise-title (title)
   "Return the key for the pages hash for the document with title TITLE"
-  (string-downcase  
-   (substitute #\Space #\_
-	       (urlstring-unescape (remove #\% title)))))
+  (let* ((dot-html-p (string-equal title ".html" :start1
+				   (max 0 (- (length title) 5))))
+	 (title (if dot-html-p (subseq title 0 (- (length title) 5))
+		    title)))
+    (string-downcase  
+     (substitute #\Space #\_
+		 (urlstring-unescape (remove #\% title))))))
 
 (defmethod find-page ((cliki cliki-instance) title)
   (gethash (canonise-title title) (cliki-pages cliki)))

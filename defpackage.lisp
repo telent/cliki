@@ -3,7 +3,7 @@
   (:export cliki-view-handler cliki-edit-handler cliki-instance cliki-url-root
 	   cliki-css-text cliki-page-header cliki-page-footer cliki-user-name
 	   write-a-href request-cliki cliki-data-directory
-	   html-for-keyword
+	   html-for-keyword request-cliki
 	   compute-index-for-page add-to-index-for-page make-index-for-page
 	   search-term-relevance
 	   edit-handler)
