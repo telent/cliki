@@ -15,7 +15,7 @@
 
 (defun add-recent-change (root date title user &optional description)
   (let ((entry (list date title user description)))
-    ;; if the description is "?" and the preceding recent changes
+    ;; if the description is empty and the preceding recent changes
     ;; entry for the same title has the same user name, don't add this one
     (let ((preceding (find-if (lambda (x) (string= (second x) title))
 			      *recent-changes-list*)))
