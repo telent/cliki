@@ -118,7 +118,7 @@
 		  ("link" () ,(urlstring (cliki-url-root cliki)) "Recent%20Changes")
 		  ("description" () ,(cliki-title cliki) " Recent Changes" )
 		  ,@items
-		  ("textinput" 
+		  ("textInput" 
 		   () 
 		   ("title" () ,(cliki-title cliki) " Search")
 		   ("description" () "Search all pages")
