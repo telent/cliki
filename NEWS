@@ -1,6 +1,9 @@
 								-*- Text -*-
 New in CLiki 0.4.1
 
+* Update README file to correspond to Araneida 0.81, and add
+  example.lisp demonstrating a simple CLiki installation
+
 * Change CLIKI-INSTANCE class graph.  Now we have CLIKI-VIEW as a parent
   of CLIKI-INSTANCE.  The approximate division is that CLIKI-VIEW deals
   with the visual aspects and CLIKI-INSTANCE deals with updating and
