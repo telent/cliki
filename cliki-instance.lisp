@@ -124,8 +124,11 @@ is set by update-page-indices (at startup and after edits).  "
 	 ((string-equal action "source")
 	  (view-page-source request page title))
 	 ((string-equal action "download")
-	  (request-redirect
-	   request (merge-url (request-url request)
-			      (caar (page-index page  :download)))))
+	  (let ((d (and page (page-index page :package))))
+	    (when d
+	      (request-redirect
+	       request (merge-url (parse-urlstring "http://ww.telent.net/cclan/")
+				  (caar d)))
+	      t)))
 	 (t
 	  (request-send-error request 500 "Eh?")))))))
