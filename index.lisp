@@ -222,7 +222,7 @@ the docs with closest angle (biggest cos theta)
 (defun search-for-string (cliki string)
   (let ((terms (mapcar
 		(lambda (x) (cons (stem-for-word x) 1))
-		(remove-if-not (lambda (w) (> (weight-for-word w) 0))
+		(remove-if-not #'interesting-word-p
 			       (araneida::split string)))))
     (sort (loop for document being the hash-values of (cliki-pages cliki)
 		for doc-terms = (page-tfidf document)
