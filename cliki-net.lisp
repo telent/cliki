@@ -14,7 +14,6 @@ body
   background: white;
   color: black;
   font-family: serif;
-  font-size: 13px;
   margin: 0; padding: 0.5em;
 }
 
@@ -182,15 +181,9 @@ pre
 
 		  '(((div :id "footer") (br))))
 	  (p "CLiki pages can be edited by anyone at any time.  Imagine a fearsomely comprehensive disclaimer of liability.  Now fear, comprehensively")
-	  (p "To help defray the expenses of running CLiki, and fund the development of more free CL stuff, you can now "
-	     ((a :href "https://www.paypal.com/xclick/business=dan%40metacircles.com&no_note=1&tax=0&currency_code=USD") "Donate via PayPal")
-	     "to"
-	     ((a :href "Daniel+Barlow") "dan@metacircles.com")
-	     "If you like.")))))))
+	  ))))))
 
 (defmethod check-page-save-allowed ((cliki cliki-net) page version user)
   (call-next-method) 
   (when (string-prefix-p "A N Other" user)
     (signal 'cliki-page-save-rejected "Anonymous posting is disabled.  Please provide a name (preferably your own")))
-
-
