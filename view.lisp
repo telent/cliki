@@ -116,29 +116,26 @@
     (request-send-headers request)
     (cliki-page-header cliki request title)
     (if page
-	(handler-case
-	    ;; we could remove the current page from the topic/links
-	    ;; here.  that might be a good idea
-	    (let* ((topics (page-topics page))
-		   (backlinks
-		    (sort (set-difference (page-backlinks page) topics)
-			  #'string-lessp :key #'page-title)))
-	      (write-page-contents-to-stream cliki page out)
-	      (when topics
-		(format out "<hr><b>Page~p in this topic: </b> " (length topics))
-		(dolist (c topics)
-		  (format out "~A &nbsp; "
-			  (write-a-href cliki (page-title c) nil))))
-	      (when backlinks
-		(format out "<hr><b>~A linked from: </b> "
-			(if topics "Also" "This page is")
-			(length backlinks))
-		(dolist (c backlinks)
-		  (format out "~A &nbsp; "
-			  (write-a-href cliki (page-title c) nil)))))
-	  (error (e)
-	    (format out
-		    "Some error occured: <pre>~A</pre>" e)))
+	(progn
+	  ;; we could remove the current page from the topic/links
+	  ;; here.  that might be a good idea
+	  (let* ((topics (page-topics page))
+		 (backlinks
+		  (sort (set-difference (page-backlinks page) topics)
+			#'string-lessp :key #'page-title)))
+	    (write-page-contents-to-stream cliki page out)
+	    (when topics
+	      (format out "<hr><b>Page~p in this topic: </b> " (length topics))
+	      (dolist (c topics)
+		(format out "~A &nbsp; "
+			(write-a-href cliki (page-title c) nil))))
+	    (when backlinks
+	      (format out "<hr><b>~A linked from: </b> "
+		      (if topics "Also" "This page is")
+		      (length backlinks))
+	      (dolist (c backlinks)
+		(format out "~A &nbsp; "
+			(write-a-href cliki (page-title c) nil))))))
 	(format out
 		"This page doesn't exist yet.  Please create it if you want to"))
     (cliki-page-footer cliki request title)
@@ -162,9 +159,35 @@
   (write-a-href cliki arg stream))
 
 (defmethod html-for-keyword ((cliki cliki-instance) stream
-			     (keyword (eql :search))
+			     (keyword (eql :legacy-search))
 			     &rest args &aux (arg (car args)))
   (legacy-search-result cliki arg stream))
+
+(defmethod html-for-keyword ((cliki cliki-instance) stream
+			     (keyword (eql :search))
+			     &rest args)
+  (destructuring-bind
+	(&key title
+	      (no-results-message "Exhibitors not listed")
+	      term show-relevance-p &allow-other-keys) args
+    (let ((pages
+	   (sort 
+	    (loop for page being the hash-values of (cliki::cliki-pages cliki)
+		  for r = (apply #'search-term-relevance cliki page term)
+		  if (> r 0)
+		  collect (list r page))
+	    #'>
+	    :key #'car))) 
+      (cond (pages
+	     (format stream "~A<ul>" title)
+	     (dolist (p pages)
+	       (format stream
+		       (if show-relevance-p "<li>~A (~A)</li>"
+			   "<li>~A</li>")
+		       (write-a-href cliki (page-title (cadr p)) nil)
+		       (car p)))
+	     (format stream "</ul>"))
+	    (t (princ no-results-message stream))))))
 
 (defmethod html-for-keyword ((cliki cliki-instance) stream
 			     (keyword (eql :clhs))
