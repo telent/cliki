@@ -122,6 +122,10 @@
        ((and (eql c #\/) (eql c1 #\())  ; search
         (write-search-result
          cliki (read-matched-parens in-stream) out-stream))
+       ((and (eql c #\>) (eql c1 #\())  ; download link
+	(let ((url (strip-outer-parens (read-matched-parens in-stream))))
+	  (format out-stream "<a class=\"download\" href=\"~A\"><b>Download from ~A</b></a>"
+		  url url)))
        ((and (member c '(#\* #\_)) (eql c1 #\())  ; link
         (write-a-href
 	 cliki (strip-outer-parens (read-matched-parens in-stream)) out-stream))
