@@ -62,7 +62,7 @@
 (defun cliki-list-all-pages-handler (request arg-string)
   (let* ((fs-root (cliki-request-data-directory request))
 	 (url-root (cliki-request-url-root request))
-	 (pages (mapcar #'pathname-name (directory fs-root :sort t))))
+	 (pages (mapcar #'pathname-name (files-in-directory fs-root))))
     (request-send-headers request)
     (write-sequence
      (html
