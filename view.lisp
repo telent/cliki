@@ -92,13 +92,15 @@ intended for use as a FORMAT Tilde-slash function"
 (defun write-code (in-string out)
   ;; should test (car form) for language and inline/display distinction
   ;; should do substitution on (cadr form) to turn < into &lt;
-  (let ((form (read-from-string in-string nil nil)))
+  (let* ((*read-eval* nil)
+         (form (read-from-string in-string nil nil)))
     (destructuring-bind (language &key (case :downcase)
                                   mode right-margin) (car form)
       (let* ((*print-case* case)
              (*print-right-margin* right-margin)
              (text (with-output-to-string (o)
-                     (pprint (cadr form) o))))
+                     (dolist (f (cdr form))
+                       (pprint f o)))))
         (format out (if (eql mode :display) "<pre>" "<tt>"))
         (with-input-from-string (i text)
           (do ((c (read-char i nil nil) (read-char i nil nil)))
