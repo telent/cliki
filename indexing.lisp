@@ -14,19 +14,24 @@
                (member c link-introducers))
           (let ((l (assoc c links)))
             (setf (cdr l)
-                  (adjoin (find-page cliki (strip-outer-parens
-					    (read-matched-parens in-stream)))
-                          (cdr l))))))))
+		  (let ((name
+			 (strip-outer-parens (read-matched-parens in-stream))))
+		    (adjoin (if (eql c #\>)
+				name
+				(find-page cliki name))
+			    (cdr l)))))))))
 
 (defun update-indexes-for-page (source-page)
   (let* ((cliki (page-cliki source-page))
 	 (links
           (with-open-file (in (page-pathname source-page) :direction :input)
-	      (grep-stream-for-links in '(#\_ #\*) cliki)))
+	      (grep-stream-for-links in '(#\_ #\> #\*) cliki)))
          (page-links-on-updated-page (cdr (assoc #\_ links)))
+	 (download-link-on-updated-page  (cadr (assoc  #\> links)))
          (category-links-on-updated-page (cdr (assoc #\* links))))
     ;; full-text indexing
     (setf (page-tf source-page) (term-frequencies source-page))
+    (setf (download-url source-page) download-link-on-updated-page)
     (loop for target-page being the hash-values of (cliki-pages cliki)
 	  for k = (canonise-title (page-title target-page))
 
