@@ -17,11 +17,14 @@ arguments.  Returns a list of page titles.
 ATTRIBUTE is (or :title :topic :body)
 MATCH is (or :exact :substring :regular-expression)
 CASE-SENSITIVE is (or t nil)"
-  (case attribute
-    (:body (search-page-bodies term pathname match case-sensitive))
-    (:title (search-page-titles term pathname match case-sensitive))
-    (:topic (search-page-topics term pathname match case-sensitive))
-    (t (search-error "Unknown search attribute"))))
+  (sort 
+   (case attribute
+     (:body (search-page-bodies term pathname match case-sensitive))
+     (:title (search-page-titles term pathname match case-sensitive))
+     (:topic (search-page-topics term pathname match case-sensitive))
+     (t (search-error "Unknown search attribute")))
+   #'string-lessp))
+
 
 (defun search-error (&rest args) (apply #'error args))
 
