@@ -2,15 +2,22 @@
 
 This is a project plan
 
-(1) create PAGE-OBJECT and TEXT-PAGE-OBJECT
+(1) create PAGE-OBJECT and PHTML-PAGE-OBJECT (and HTML-PAGE-OBJECT for
+interpolation-free operation?  Not really - who cares?)
+
+-done
 
 (2) Some way to instantiate an object would be nice.  I say we read it
 from the filesystem and guess the object type from filename extension.
 Butcher the edit handler to do this, also parsing the categories and
 suchlike.
 
-(3) Write methods on TEXT-PAGE-OBJECT to do view and view-for-edit
+-need category support, else done
+
+(3) Write methods on PHTML-PAGE-OBJECT to do view and view-for-edit
 (from ram) and save (to disk)
+
+-done
 
 (4) Add methods to
 
@@ -18,7 +25,43 @@ suchlike.
 - delete an object
 - search against criteria
 
-(5) write the search code
+-done, less search
+
+(5) need to instantiate all those objects somehow
+
+I'm thinking along the lines of a function which takes a URL and
+directory, exports handlers for the URL and makes an object for each
+file in the directory
+
+-done
+
+(6) Storage management should go into the base class, I think.  Then
+object instantiation gets an awful lot simpler: a mapping from file
+type -> class.  Also renaming and deletion
+
+-done
+
+Worth having the base class do file opening too, and the kids run on
+streams?  Unsure.  Be cleaner, I suppose
+
+(7) (UI) How do we create new objects, now that we may have many
+different types?  Requirement: we don't want to actually create a
+persistent file on disk until there is some data to put in it.
+
+Suggest that the "file not found" handler be a menu of the available
+object types, each of which will take the user into the appropriate
+editor with an empty object of that type.
+
+Problem is that the existing edit processing (and the dispatch that
+calls it) depends on having an instance to edit.  And I'd rather not 
+get into kludgey "pre-natal" object hacks without thinking it through
+
+(8) Need to have objects know about their own URLs for operations.
+Add these as slots at instantiation time
+
+-done
+
+(9) write the search code
 
 (n) finish porting araneida to :sockets
 
