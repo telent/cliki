@@ -85,10 +85,7 @@
 		    ((input :name "words" :size "30"))
 		    ((input :type "submit" :value "search")))))
     (format out "<p>CLiki pages can be edited by anyone at any time.  Imagine a fearsomely comprehensive disclaimer of liability.  Now fear, comprehensively")
-    ;; One day I will separate cliki-the-app from cliki-the-website, I promise
-    ;; In the meantime, you probably don't want this message
-    #+nil
-    (format out "<P>To help defray the expenses of running CLiki, and fund the development of more free CL stuff, you can now <a href=\"https://www.paypal.com/xclick/business=dan%40metacircles.com&no_note=1&tax=0&currency_code=USD\">Donate via PayPal</a> to <a href=\"Daniel+Barlow\">dan@metacircles.com</a>.  If you like.")))
+    ))
 
 
 (defun print-page-selector
@@ -172,10 +169,13 @@
     (with-page-surround (cliki request title)
       (if page
 	  (progn
-	    (let* ((topics (remove page (page-topics page)))
+	    (let* ((topics 
+		    (sort (delete page (copy-list (page-topics page)))
+			  #'string-lessp
+			  :key #'page-title))
 		   (backlinks
 		    (sort (set-difference
-			   (remove page (page-backlinks page))
+			   (delete page (copy-list (page-backlinks page)))
 			   topics)
 			  #'string-lessp :key #'page-title)))
 	      (write-page-contents-to-stream cliki page out :version version)
