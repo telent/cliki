@@ -83,7 +83,7 @@
 	 (seen-titles nil)
 	 (changes (cliki-recent-changes cliki)))
     (request-send-headers request :content-type "text/xml")
-    (format out "<?xml version=\"1.0\"?>
+    (format out "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>
 <rss version=\"0.92\">
   <channel>
     <title>~A Recent Changes</title>
