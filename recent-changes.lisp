@@ -3,6 +3,7 @@
 (defun restore-recent-changes (cliki &optional max-entries)
   (with-open-file (in (merge-pathnames "admin/recent-changes.dat"
 				       (cliki-data-directory cliki))
+		      :if-does-not-exist :create
 		      :direction :input)
       (loop for entry = (read in nil nil)
 	    while (and entry (or (not max-entries) (> max-entries 0)))
