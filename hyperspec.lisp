@@ -1049,7 +1049,7 @@
   "Returns the URL of a HyperSpec description of TERM."
   (let* ((term-string (etypecase term
                         (string (string-downcase term))
-                        (symbol (string-downcase (symbol-string term)))))
+                        (symbol (string-downcase (symbol-name term)))))
          (filename (gethash term-string *hyperspec-filenames*)))
     (when filename
       (concatenate 'string *hyperspec-base-url* filename))))
