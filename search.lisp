@@ -41,7 +41,9 @@
 		     for stem = (stem-for-word word)
 		     when (interesting-word-p stem)
 		     collect (cons stem 1))))
-    (document-vector-cosine terms doc-terms)))
+    (if doc-terms
+	(document-vector-cosine terms doc-terms)
+	0)))
 
 (defmethod search-term-summary ((cliki cliki-instance) page 
 				(term (eql :body)) &rest args)
