@@ -17,14 +17,14 @@ intended for use as a FORMAT Tilde-slash function"
         (tr ((td :colspan 4) (hr)))))
      stream)))
 
-(defun send-cliki-page-preamble (request title)
+(defun send-cliki-page-preamble (request title &optional (head ""))
   (let ((out (request-stream request)))
-    (format out "<html><head><title>Cliki : ~A</title></head>
+    (format out "<html><head><title>Cliki : ~A</title>~A</head>
 <link rel=\"stylesheet\" href=\"~Aadmin/cliki.css\">
 <body>
 ~/cliki-html:titlebar/
 <h1>~A</h1>~%"
-	    title (urlstring (cliki-request-url-root request))
+	    title head (urlstring (cliki-request-url-root request))
 	    request title)))
 
 (defun css-file-handler (request rest-of-url)
@@ -33,9 +33,11 @@ intended for use as a FORMAT Tilde-slash function"
    "HTML { font-family: times,serif; } 
 BODY {  background-color: White }
 H1,H2,H3,H4 { font-family: Helvetica,Arial }
-H1 {  color: \"ff0000\" }
+H1 {  color: DarkGreen }
 H2 { font-size: 100% }
-DIV { margin-left: 5%; margin-right: 5% }" (request-stream request)))
+DIV { margin-left: 5%; margin-right: 5% }
+A.internal { color: \"0077bb\" }
+" (request-stream request)))
 
 (defun print-page-selector
     (stream start-of-page number-on-page total-length urlstring-stub)
@@ -158,8 +160,8 @@ DIV { margin-left: 5%; margin-right: 5% }" (request-stream request)))
   "Write an A HREF element for the CLiki page TITLE found in the directory ROOT.  STREAM may be an open stream or T or NIL, a la FORMAT"
   (let ((escaped (urlstring-escape title)))
     (if (probe-file (merge-pathnames (find-page-name title root) root))
-        (format stream "<a class=internal href=\"~A\" >~A</a>" escaped title)
-      (format stream "~A<a class=internal href=\"~A?edit\" >?</a>" title escaped))))
+        (format stream "<a class=\"internal\" href=\"~A\" >~A</a>" escaped title)
+      (format stream "~A<a class=\"internal\" href=\"~A?edit\" >?</a>" title escaped))))
 
 
 (defun write-code (in-string out)
