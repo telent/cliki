@@ -24,11 +24,27 @@ overwrite their change.
 handle the cliki-page-save-rejected signals somewhere, in a way that
 will make the text show up in the browser window, not the error log.
 
-
 Can we make *(Delete this page) do more to make a page look deleted?
 Hard to say what exactly, though: if it's not got any links and stuff
 it should be mostly inaccessible other than from Recent Changes.
 Could lose it from admin/all-pages, I suppose
+
+refuse to accept edits when the body is entirely empty (seems to be a
+problem sometimes possibly with buggy browsers or mod_proxy)
+
+html entity escaping when editing in a textarea
+
+when a page is created, links to it from other pages probbaly aren't
+noted because the Last-modified on the other pages doesn't change -
+hence mod_proxy will serve the old version.  bypassing the proxy will
+cause the change to be noted
+
+when a page is created, it doesn't know about the existing pages that
+link to it.  the index protocol thing will manage outgoing links ok,
+but there's nothing to scan the rest of the repository for incoming
+links.  (Is this also a problem at page load?  if a->b and a is loaded
+before b exists, do we lose the backlink?)
+
 
 
 * CLiki

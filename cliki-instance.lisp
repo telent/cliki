@@ -11,6 +11,17 @@
 	       (string-downcase (cliki-default-page-name cliki)))
 	   (cliki-pages cliki)))
 
+(defmethod find-page-or-placeholder ((cliki cliki-view) title)
+  (or (find-page cliki title)
+      (let ((p
+	     (make-instance 'cliki-page :title title
+			    :pathname nil ; no pathname
+			    :names (list title)
+			    :versions nil
+			    :cliki cliki)))
+	(setf (gethash (canonise-title title) (cliki-pages cliki)) p)
+	p)))
+
 (defun name-for-url (url)
   (let* ((path (url-path url))
 	 (slash (position #\/ path :from-end t))

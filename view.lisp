@@ -157,13 +157,16 @@
 (defun write-page-contents-to-stream (cliki page out-stream
 				      &key (version :newest))
   "Read the file for PAGE and write to OUT-STREAM, substituting weird markup language elements as we go. "  
-  (with-open-file (in-stream (page-pathname page :version version)
-			     :direction :input)
-    (subst-markup-in-stream cliki in-stream out-stream)))
+  (if (page-pathname page)
+      (with-open-file (in-stream (page-pathname page :version version)
+				 :direction :input)
+	(subst-markup-in-stream cliki in-stream out-stream))
+      (format out-stream
+	      "This page doesn't exist yet.  Please create it if you want to")))
 
 (defun view-page (cliki request page title &key (version :newest))
   (let* ((pathname (if page (page-pathname page :version version)))
-	 (lmtime (if page (file-write-date pathname) (get-universal-time))))
+	 (lmtime (if pathname (file-write-date pathname) (get-universal-time))))
     (request-send-headers request :conditional t 
 			  :last-modified lmtime)
     (with-page-surround (cliki request title)
@@ -322,10 +325,11 @@
 (defgeneric write-a-href (cliki-view title stream))
 (defmethod write-a-href ((cliki cliki-view) title stream)
   "Write an A HREF element for the CLiki page TITLE.  STREAM may be an open stream or T or NIL, a la FORMAT"
-  (let ((escaped (urlstring-escape title)))
-    (if (find-page cliki title)
+  (let ((escaped (urlstring-escape title))
+	(p (find-page cliki title)))
+    (if (and p (page-pathname p))
         (format stream "<a class=\"internal\" href=\"~A\" >~A</a>" escaped title)
-      (format stream "~A<a class=\"internal\" href=\"edit/~A\" >?</a>" title escaped))))
+	(format stream "~A<a class=\"internal\" href=\"edit/~A\" >?</a>" title escaped))))
 
 (defun read-matched-parens (stream)
   "Read from STREAM until we have seen as many #\) as #\(, returning

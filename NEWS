@@ -13,9 +13,9 @@ New in CLiki 0.4.3
   stuff from www.cliki.net stuff: new cliki-net class that you
   probably don't want to use unless you're me  
 
-* Indexing tweaks mean startup on big clikis may be a bit faster
+* Indexing tweaks mean startup on big clikis may be a bit faster.  
 
-* rss bug fix
+* Bug fixes: RSS generation, topic searches.
 
 * *(Uncategorized) marker added to default text for new pages.
 

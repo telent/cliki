@@ -4,12 +4,15 @@
   (cdr (assoc index (page-indices page))))
 
 (defmethod page-pathname ((page cliki-page) &key (version :newest))
-  (let ((pathname (slot-value page 'pathname))
-	(newest (car (page-versions page))))
-    (when (eql version :newest) (setf version newest))
-    (if (zerop version)
-	pathname
-	(make-pathname :type (princ-to-string version) :defaults pathname))))
+  (let ((pathname (slot-value page 'pathname)))
+    (if pathname
+	(let ((newest (car (page-versions page))))
+	  (when (eql version :newest) (setf version newest))
+	  (if (zerop version)
+	      pathname
+	      (make-pathname :type (princ-to-string version)
+			     :defaults pathname)))
+	nil)))
 
     
 (defmethod (setf page-index) (new-value (page cliki-page) index)

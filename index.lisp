@@ -121,7 +121,7 @@
   ;; for each of the pages, delete references to SOURCE-PAGE
   ;; (2) for each of the page titles in INDEX, find its page,
   ;; add link to SOURCE-PAGE
-  (labels ((fp (x) (find-page cliki (car x))))
+  (labels ((fp (x) (find-page-or-placeholder cliki (car x))))
     (dolist (target-page (mapcar #'fp (page-index source-page :topic)))
       (when target-page
 	(setf (page-topics target-page)

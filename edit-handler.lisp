@@ -87,7 +87,7 @@ Describe ~A here
 This page is presently *(Uncategorized): please add appropriate 
 _(topic markers) and remove this text
 </textarea>" title)))
-	  (if page
+	  (if (and page (page-pathname page))
 	      (with-open-file (in-stream (page-pathname page) :direction :input)
 		(if (zerop (file-length in-stream))
 		    (write-sequence default out)
@@ -163,6 +163,9 @@ _(topic markers) and remove this text
 	  (setf summary (or summary "(none)")))
 	(let ((pn (page-pathname page :version version)))
 	  (check-page-save-allowed cliki page version username)
+	  (unless pn			; set path if was a placeholder
+	    (setf pn (merge-pathnames (escape-for-filename title))
+		  (slot-value page 'pathname) pn))
 	  (save-stream cliki request pn)
 	  (with-open-file (out-file (title-file pn)  :direction :output
 				    :if-does-not-exist :create
