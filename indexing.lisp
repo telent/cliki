@@ -29,7 +29,7 @@
       (setf (gethash key table)
             (delete to entry :test #'equal)))))
 
-(defun grep-stream-for-links (in-stream link-introducers)
+(defun grep-stream-for-links (in-stream link-introducers root)
   (let ((eof (gensym))
         (links (mapcar #'list link-introducers)))
     (do ((c (read-char in-stream nil eof) (read-char in-stream nil eof))
@@ -39,15 +39,16 @@
                (member c link-introducers))
           (let ((l (assoc c links)))
             (setf (cdr l)
-                  (adjoin (strip-outer-parens
-                           (read-matched-parens in-stream))
+                  (adjoin (find-page-name (strip-outer-parens
+                                           (read-matched-parens in-stream))
+                                          root)
                           (cdr l))))))))
 
 (defun update-indexes-for-page (title root)
   (let* ((pathname (merge-pathnames title root))
          (links
           (with-open-file (in pathname :direction :input)
-            (grep-stream-for-links in '(#\_ #\*))))
+            (grep-stream-for-links in '(#\_ #\*) root)))
          (page-links-on-updated-page (cdr (assoc #\_ links)))
          (category-links-on-updated-page (cdr (assoc #\* links))))
     (loop for k in (mapcar #'pathname-name (directory root))
