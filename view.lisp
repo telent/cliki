@@ -7,43 +7,21 @@ intended for use as a FORMAT Tilde-slash function"
   (declare (ignore colon-p at-p params))
   (let* ((here (request-url format-arg))
          (home (merge-url here "index")))
-  (write-sequence
-   (html
-    `((table :width "100%")
-      (tr
-       (td ((a :href ,(urlstring home))
-            ((img :border 0 :src "/cliki.png" :alt "[ Home ]"))))
-       (td "CLiki pages can be edited by anybody at any time.  Imagine a <i>scarily comprehensive legal disclaimer</i>"))
-      (tr ((td :colspan 4) (hr)))))
-   stream)))
+    (write-sequence
+     (html
+      `((table :width "100%")
+        (tr
+         (td ((a :href ,(urlstring home))
+              ((img :border 0 :src "/cliki.png" :alt "[ Home ]"))))
+         (td "CLiki pages can be edited by anybody at any time.  Imagine a <i>scarily comprehensive legal disclaimer</i>"))
+        (tr ((td :colspan 4) (hr)))))
+     stream)))
 
-(defvar *categories* '())
-(defun rebuild-categories (directory)
-  (setf *categories* (list))
-  (with-open-file (o #p"/dev/null" :direction :output)
-    (dolist (f (directory directory))
-      (read-categories-from-file f o))))
 
-(defun read-categories-from-file (f o)
-  (with-open-file (i f :direction :input)
-    (let ((categories (ignore-errors (write-stream-to-stream i o))))
-      (dolist (c categories)
-        (add-page-to-category c (pathname-name f))))))
-
-(defun add-page-to-category (category title)
-  (let ((c (assoc category *categories* :test #'string=)))
-    (if c
-        (setf (cdr c) (adjoin title (cdr c) :test #'string=))
-      (setf *categories* (acons category (list title) *categories*)))))
-
-(defun pages-for-category (category)
-  (copy-list (cdr (assoc category *categories* :test #'string=))))
-
-;; also need function to delete page from all categories
-             
 (defun view-page (request title root)
   (let ((out  (request-stream request))
         (pathname (merge-pathnames title root)))
+    (update-indexes-for-page title root)
     (request-send-headers request)
     (format out
             "<html><head><title>Cliki : ~A</title></head>
@@ -51,39 +29,46 @@ intended for use as a FORMAT Tilde-slash function"
 <body>
 ~/cliki-html:titlebar/
 <h1>~A</h1>~%" title request title)
-    (let ((categories
-           (handler-case
-            (with-open-file (in pathname :direction :input)
-              (write-stream-to-stream in out))
-            (file-error (e)                    ;probably just doesn't exist
-                        (declare (ignore e))
-                        (format out
+    (handler-case
+     (with-open-file (in pathname :direction :input)
+       (write-stream-to-stream in out))
+     (file-error (e)                    ;probably just doesn't exist
+                 (declare (ignore e))
+                 (format out
                                 "This page doesn't exist yet.  Please create it if you want to") '())
-            (error (e)
-                   (format out
-                           "Some error occured: <pre>~A</pre>" e)
-                   '()))))
+     (error (e)
+            (format out
+                    "Some error occured: <pre>~A</pre>" e)
+            '()))
+    (let* ((categories (gethash (intern title #.*package*) *categories*))
+           (backlinks
+            (sort (set-difference (gethash (intern title #.*package*) *backlinks*)
+                                  categories :test #'equal)
+                  #'string-lessp)))
       (when categories
-        (format out "<hr><b>Topic~p:</b> " (length categories))
+        (format out "<hr><b>Page~p in this topic: </b> " (length categories))
         (dolist (c categories)
-          (add-page-to-category c title)
+          (format out "~A &nbsp; "
+                  (write-a-href c root nil))))
+      (when backlinks
+        (format out "<hr><b>~A linked from: </b> "
+                (if categories "Also" "This page is")
+                (length backlinks))
+        (dolist (c backlinks)
           (format out "~A &nbsp; "
                   (write-a-href c root nil)))))
-    (format out "<hr><form action=\"http://loaclhost.telent.net/cgi-bin/htsearch\"><a href=\"~A?edit\">Edit this page</a> | <a href=\"~A?source\">View page source</a> |  Last edit: ~A | Search CLiki <input name=words size=20></form>"
+    (format out "<hr><form action=\"http://loaclhost.telent.net/cgi-bin/htsearch\"><a href=\"~A?edit\">Edit this page</a> | <a href=\"~A?source\">View page source</a> |  Last edit: ~A | <a href=\"CLiki+Search\" Search CLiki</a> <input name=words size=20></form>"
             (urlstring-escape title) (urlstring-escape title)
             (araneida::aif (file-write-date pathname)
                  (araneida::universal-time-to-rfc-date araneida::it)
                  "(none)")
             )))
 
-(defun directory-for (pathname)
-  (merge-pathnames (make-pathname :name :wild) pathname))
 
 (defun write-stream-to-stream (in-stream out-stream)
-  "Read from IN-STREAM and write to OUT-STREAM, substituting weird markup language elements as we go.  IN-STREAM must be a FILE-STREAM or SYNONYM-STREAM associeted with same if internal links are to work.  Returns a list of categories compiled from the *(foo) elements read from IN-STREAM"
+  "Read from IN-STREAM and write to OUT-STREAM, substituting weird markup language elements as we go.  IN-STREAM must be a FILE-STREAM or SYNONYM-STREAM associated with same if internal links are to work."  
   (let ((eof (gensym))
         (newlines 0)
-        (categories nil)                
         (returns 0))
     (do ((c (read-char in-stream nil eof) (read-char in-stream nil eof))
          (c1 (peek-char nil in-stream nil) (peek-char nil in-stream nil)))
@@ -107,21 +92,12 @@ intended for use as a FORMAT Tilde-slash function"
         (write-search-result
          (directory-for in-stream)
          (read-matched-parens in-stream) out-stream))
-       ((and (eql c #\_) (eql c1 #\())  ; link
+       ((and (member c '(#\* #\_)) (eql c1 #\())  ; link
         (write-a-href
          (strip-outer-parens (read-matched-parens in-stream))
-         (directory-for in-stream) out-stream))
-       ((and (eql c #\*) (eql c1 #\())  ; link and category
-        (let ((title (strip-outer-parens (read-matched-parens in-stream))))
-          (pushnew title categories :test #'string-equal)
-          (write-a-href title (directory-for in-stream) out-stream)))
-       ((and (eql c #\') (eql c1 #\())  ; lisp code
-        (write-code
-         (read-matched-parens in-stream) out-stream))
-       (t (write-char c out-stream))
-       ))
-    categories))
-
+         (directory-for in-stream) out-stream))              
+       (t (write-char c out-stream)) ))))
+       
 
 (defun write-search-result (directory string stream)
   (let* ((*read-eval* nil)
@@ -133,7 +109,8 @@ intended for use as a FORMAT Tilde-slash function"
         (write-sequence
          (html
           `(ul
-            ,@(mapcar (lambda (x) `(li ((a :href ,(urlstring-escape x)) ,x)))
+            ,@(mapcar (lambda (x) `(li ((a :class "internal"
+                                           :href ,(urlstring-escape x)) ,x)))
                       titles)))
          stream)))))
 
@@ -146,8 +123,8 @@ intended for use as a FORMAT Tilde-slash function"
   "Write an A HREF element for the CLiki page TITLE found in the directory ROOT.  STREAM may be an open stream or T or NIL, a la FORMAT"
   (let ((escaped (urlstring-escape title)))
     (if (probe-file (merge-pathnames title root))
-        (format stream "<a href=\"~A\" >~A</a>" escaped title)
-      (format stream "~A<a href=\"~A?edit\" >?</a>" title escaped))))
+        (format stream "<a class=internal href=\"~A\" >~A</a>" escaped title)
+      (format stream "~A<a class=internal href=\"~A?edit\" >?</a>" title escaped))))
 
 
 (defun write-code (in-string out)
