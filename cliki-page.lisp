@@ -17,7 +17,7 @@
 			(* frequency (log (/ (cliki-number-of-documents cliki)
 					     (cliki-idf cliki term))))))))
 
-(defmethod page-url ((cliki cliki-instance) (page cliki-page))
+(defmethod page-url ((cliki cliki-view) (page cliki-page))
   (merge-url (cliki-url-root cliki)
 	     (urlstring-escape (page-title page))))
 
