@@ -11,7 +11,7 @@
 				  :port (url-port *url*)))
 (defvar *cliki-instance* nil)
 (setf *cliki-instance*
-      (make-instance 'cliki::cliki-instance
+      (make-instance 'cliki::cliki-net
                      :data-directory "/var/www/cliki/"
                      :url-root (merge-url *url* "/cliki/")))
 (install-handler (http-listener-handler *listener*)
