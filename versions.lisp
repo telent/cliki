@@ -11,7 +11,8 @@
 
 (defmethod check-page-save-allowed ((cliki cliki-instance) page version user)
   (unless
-      (or (version-open-p cliki page version user)
+      (or (not (page-versions page))
+	  (version-open-p cliki page version user)
 	  (= version (1+ (car (page-versions page)))))
     (signal 'cliki-page-save-rejected
 	    :client-message
