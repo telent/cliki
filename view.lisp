@@ -1,7 +1,6 @@
 (in-package :cliki)
 
-
-(defun cliki-view-handler (request arg-string root)
+(defun phtml-view-handler (request arg-string root)
   (let* ((file (merge-pathnames arg-string root))
          (out (request-stream request)))
     (request-send-headers request)
@@ -105,8 +104,6 @@ this is left in the output but not counted by the bracket matcher"
                                     (read-matched-parens i))
             "(foo(bar(bax)bo\\)ol))")
 
-#|
-(rt:do-test 'read-matched-parens) |#
 
 ;;; I really hate this kind of stuff.  Should we unescape?  Should we only
 ;;; unescape occurences of CHAR?  Who knows ...
