@@ -14,7 +14,9 @@
 (in-package :cliki)
 
 
-(defparameter *hyperspec-base-url* "http://www.lisp.org/HyperSpec/Body/")
+(defparameter *hyperspec-base-url*
+  "http://www.xanalys.com/software_tools/reference/HyperSpec/Body/"
+  #+ignore "http://www.lisp.org/HyperSpec/Body/")
 
 (defvar *hyperspec-filenames* (make-hash-table :test #'equal :size 100))
 

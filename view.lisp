@@ -7,15 +7,25 @@ intended for use as a FORMAT Tilde-slash function"
   (declare (ignore colon-p at-p params))
   (let* ((here (request-url format-arg))
          (home (cliki-request-url-root format-arg)))
-    (write-sequence
-     (html
-      `((table :width "100%")
-        (tr
-         (td ((a :href ,(urlstring home))
-              ((img :border 0 :src "/cliki.png" :alt "[ Home ]"))))
-         (td "CLiki pages can be edited by anybody at any time.  Imagine a <i>scarily comprehensive legal disclaimer</i>.  Double it.  Add two.  <!-- Now shut your eyes.  Dark, isn't it? -->"))
-        (tr ((td :colspan 4) (hr)))))
-     stream)))
+    (labels ((ahref (l) (urlstring (araneida:merge-url home l)))) 
+      (write-sequence
+       (html
+	`(p
+	  ((table :width "100%")
+	   (tr
+	    (td ((a :href ,(urlstring home))
+		 ((img :border 0 :src "/cliki.png" :alt "[ Home ]"))))
+	    ((td :colspan 3) "CLiki pages can be edited by anybody at any time.  Imagine a <i>scarily comprehensive legal disclaimer</i>.  Double it.  Add two.  <!-- Now shut your eyes.  Dark, isn't it? -->")))
+	  (center
+	   (table
+	    (tr
+	     (td ((a :href ,(ahref "#")) "[ Home ]"))
+	     (td ((a :href ,(ahref "Recent%20Changes")) "[ Recent Changes ]"))
+	     (td ((a :href ,(ahref "CLiki")) "[ About CLiki ]"))
+	     (td ((a :href ,(ahref "Text Formatting")) "[ Text Formatting ]")))
+	    ))
+	  (hr)))
+       stream))))
 
 (defun send-cliki-page-preamble (request title &optional (head ""))
   (let ((out (request-stream request)))
