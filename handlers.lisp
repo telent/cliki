@@ -106,8 +106,6 @@ A.hyperspec { color: #442266 }
   (setf (request-cliki request) cliki-instance)
   (dispatch-request request (cliki-handlers cliki-instance) discriminator))
 
-
-
 (defun test ()
   (let ((base-url (parse-urlstring "http://ww.noetbook.telent.net/")))
     (export-server (make-instance 'server :name "ww.noetbook.telent.net" :base-url base-url :port 8000))
