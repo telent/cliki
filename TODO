@@ -1,6 +1,6 @@
 -*- Text -*-
 
-This is a project plan
+
 
 (1) create PAGE-OBJECT and PHTML-PAGE-OBJECT (and HTML-PAGE-OBJECT for
 interpolation-free operation?  Not really - who cares?)
@@ -52,16 +52,33 @@ Suggest that the "file not found" handler be a menu of the available
 object types, each of which will take the user into the appropriate
 editor with an empty object of that type.
 
-Problem is that the existing edit processing (and the dispatch that
-calls it) depends on having an instance to edit.  And I'd rather not 
-get into kludgey "pre-natal" object hacks without thinking it through
+-done
+
+There needs to be some way of getting a vanilla edit form based on the
+class rather than on the object: make-edit-form and
+process-post-request need methods specialised on (eql {instance of
+standard-object}) or (eql class-name)
+
+-done
+
+handler needs adding to call them.  Urls are ".../new/filename.fileextension"
+(e.g. "new/here%20is%20my%20page.phtml"); it has GET and POST handlers
+like what the edit handlers do
+
+-done
+
+If we try to add a page which already exists, we increment a serial
+number on its name (so, "CMUCL.2")
 
 (8) Need to have objects know about their own URLs for operations.
 Add these as slots at instantiation time
 
 -done
 
-(9) write the search code
+(9) set Expires: headers and stuff to kill the caching problem.
+Actually, just setting Last-Modified would probably help
+
+(10) write the search code
 
 (n) finish porting araneida to :sockets
 
