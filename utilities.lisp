@@ -7,3 +7,8 @@
 (defun string-prefix-p (short long)
   (let ((m (mismatch short long)))
     (or (not m) (= m (length short)))))
+
+(defmacro with-page-surround ((cliki request title &optional head) &body forms)
+  `(cliki-page-surround ,cliki ,request
+			(lambda (out) ,@forms)
+			:title ,title :head ,head))
