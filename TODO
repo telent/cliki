@@ -1,0 +1,24 @@
+-*- Text -*-
+
+This is a project plan
+
+(1) create PAGE-OBJECT and TEXT-PAGE-OBJECT
+
+(2) Some way to instantiate an object would be nice.  I say we read it
+from the filesystem and guess the object type from filename extension.
+Butcher the edit handler to do this, also parsing the categories and
+suchlike.
+
+(3) Write methods on TEXT-PAGE-OBJECT to do view and view-for-edit
+(from ram) and save (to disk)
+
+(4) Add methods to
+
+- rename an object
+- delete an object
+- search against criteria
+
+(5) write the search code
+
+(n) finish porting araneida to :sockets
+
