@@ -84,15 +84,14 @@
 	 (changes (cliki-recent-changes cliki)))
     (request-send-headers request :content-type "text/xml")
     (format out "<?xml version=\"1.0\"?>
-<rdf:RDF
-xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"
-xmlns=\"http://my.netscape.com/rdf/simple/0.9/\">
+<!DOCTYPE rss PUBLIC \"-//Netscape Communications//DTD RSS 0.91//EN\"
+            \"http://my.netscape.com/publish/formats/rss-0.91.dtd\">
 
+<rss version=\"0.92\">
   <channel>
     <title>~A Recent Changes</title>
     <link>~ARecent_Changes</link>
     <description>~A Recent Changes</description>
-  </channel>
 "
 	    (cliki-title cliki) 
 	    (urlstring (cliki-url-root cliki))
@@ -124,6 +123,7 @@ xmlns=\"http://my.netscape.com/rdf/simple/0.9/\">
 <name>words</name>
 <link>~Aadmin/search</link>
 </textinput>
-</rdf:RDF>"
+</channel>
+</rss>"
 	    (cliki-title cliki)
 	    (urlstring (cliki-url-root cliki)))))
