@@ -4,7 +4,7 @@
 
 (defsystem cliki
   :depends-on (ARANEIDA net-telent-date xmls)
-  :version "0.4.3"
+  :version "0.4.4"
   :components ((:file "defpackage")               
 	       (:file "utilities" :depends-on ("defpackage"))
 	       (:file "cliki-instance-class" :depends-on ("defpackage"))
@@ -15,7 +15,8 @@
 	       (:file "cliki-request-class" :depends-on ("defpackage"))
 	       (:file "cliki-request" :depends-on
 		      ("cliki-instance-class" "cliki-request-class"))
-	       (:file "edit-handler-class" :depends-on ("defpackage"))
+	       (:file "edit-handler-class" 
+		      :depends-on ("defpackage" "utilities"))
 	       (:file "edit-handler" :depends-on ("cliki-request-class"
 						  "cliki-page-class"
 						  "view"
@@ -29,7 +30,7 @@
 	       (:file "hyperspec" :depends-on ("defpackage"))
                ;(:file "link-checker") :depends-on ("indexing"))
                (:file "view" :depends-on
-		      ("hyperspec"  "cliki-request"))
+		      ("hyperspec" "utilities" "cliki-request"))
                (:file "recent-changes"
 		      :depends-on ("view" "cliki-instance"  "cliki-request"))
 	       (:file "view-source"
@@ -42,9 +43,10 @@
 	       (:file "strip-html-stream" :depends-on ("buffered-output-stream"))
                (:file "search" :depends-on ("index" "elided-stream" "strip-html-stream"))
                (:file "handlers" :depends-on
-                      ("view" "index" "view-source" "search"))
+                      ("view" "utilities" "index" "view-source" "search"))
 	       (:file "cliki-skin" :depends-on ("cliki-instance-class"))
 	       (:file "cliki-net"  :depends-on ("cliki-instance"))
+	       (:file "versions" :depends-on ("defpackage" "cliki-page"))
 	       (:static-file "example" :pathname "example.lisp")
 	       (:static-file "TODO")
 	       (:static-file "make-TODO" :pathname "make-TODO.pl")
