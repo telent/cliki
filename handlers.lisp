@@ -25,6 +25,8 @@ A.hyperspec { color: #442266 }
 	(view-page request page title))
        ((string-equal action "source")
         (view-page-source request page title))
+       ((string-equal action "download")
+	(request-redirect request (parse-urlstring (download-url page))))
        ((string-equal action "edit")
         (edit-page request page title))
        ;; can add in other ops like delete etc
@@ -106,12 +108,25 @@ A.hyperspec { color: #442266 }
   (setf (request-cliki request) cliki-instance)
   (dispatch-request request (cliki-handlers cliki-instance) discriminator))
 
+(defvar   *cliki-instance*)
+
 (defun test ()
   (let ((base-url (parse-urlstring "http://ww.noetbook.telent.net/")))
+    (setf *cliki-instance*
+	  (make-instance 'cliki-instance
+                         :data-directory "/var/www/cliki/"
+                         :url-root (merge-url base-url "/cliki/")))    
     (export-server (make-instance 'server :name "ww.noetbook.telent.net" :base-url base-url :port 8000))
     (export-handler (merge-url base-url "/cliki/")
-		    '(cliki-handler #p"/var/www/cliki/")
+		    `(cliki-handler ,*cliki-instance*)
 		    :needs-discriminator t)
+    (export-handler (merge-url base-url "/cliki/")
+		    (lambda (r re)
+		      (request-send-error r 500
+					  (princ-to-string (request-condition r)))
+		      (close (request-stream r))
+		      (break))
+		    :stage :error)
     (with-open-file (conf "/tmp/cliki.cf"
 			  :direction :output
 			  :if-does-not-exist :create)
