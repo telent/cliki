@@ -32,15 +32,14 @@ is set by update-page-indices (at startup and after edits).  "
 
 (defmethod shared-initialize
     :after ((cliki cliki-instance) slot-names &rest initargs)
+    (declare (ignorable initargs))
   (setf (cliki-data-directory cliki) (pathname (cliki-data-directory cliki)))
-  (let ((handlers (cliki-handlers cliki))
-	(base-url (cliki-url-root cliki))
-	(files (remove-if-not
+  (let ((files (remove-if-not
 		#'pathname-name
 		(directory
 		 (merge-pathnames "*.titles"
 				  (cliki-data-directory cliki))))))
-    (dolist (f files)
+    (dolist (f files) ;(subseq files 0 14))
       (let* ((titles (with-open-file (i f :direction :input) (read i)))
 	     (*default-pathname-defaults* (cliki-data-directory cliki))
 	     (p (make-instance 'cliki-page
@@ -57,31 +56,66 @@ is set by update-page-indices (at startup and after edits).  "
 	  do (update-page-indices cliki page)) 
     (update-idf cliki)
     (restore-recent-changes cliki)
-    (export-handler base-url 'cliki-get-handler
-		    :method :get :stage handlers)
-    (export-handler base-url
-		    (lambda (r rest)
-		      (declare (ignore rest))
-		      (request-redirect
-		       r (merge-url (request-url r) "index")))
-		    :match :exact :method :get :stage handlers)
-    (export-handler base-url 'cliki-head-handler
-		    :method :head :stage handlers)
-    (export-handler base-url 'cliki-post-handler 
-		    :method :post :stage handlers)
-    (export-handler (merge-url base-url "admin/all-pages")
-		    'cliki-list-all-pages-handler :stage handlers)
-    (export-handler (merge-url base-url "admin/cliki.css")
-		    'css-file-handler  :stage handlers)
-    (export-handler (merge-url base-url "admin/search")
-		    'cliki-search-handler :stage handlers)
-    (export-handler (merge-url base-url "Recent%20Changes")
-		    `(view-recent-changes) :stage handlers)
-    (export-handler (merge-url base-url "recent-changes.rdf")
-		    `(rdf-recent-changes) :stage handlers)
-    (export-handler (merge-url base-url "recent-changes.sexp")
-		    `(sexp-recent-changes) :stage handlers)
-    (export-handler (merge-url base-url "Recent+Changes")
-		    `(view-recent-changes) :stage handlers)
-    (setf (cliki-handlers cliki) handlers)))
+    (let ((edit-handler (make-instance 'edit-handler :cliki cliki)))
+      (install-handler cliki edit-handler "edit/" nil))
 
+    (install-handler cliki 'cliki-list-all-pages-handler "admin/all-pages" t)
+    (install-handler cliki
+		     (lambda (request)
+		       (request-send-headers request
+					     :content-type "text/plain")
+		       (cliki-css-text cliki (request-stream request))
+		       t)
+		     "admin/cliki.css" t)
+
+
+    (install-handler cliki 'cliki-search-handler "admin/search" nil)
+    (install-handler cliki `(view-recent-changes) "Recent%20Changes" t)
+    (install-handler cliki `(rdf-recent-changes) "recent-changes.rdf" t)
+    (install-handler cliki `(sexp-recent-changes) "recent-changes.sexp" t)
+    (install-handler cliki `(view-recent-changes) "Recent+Changes" t)
+  ))
+
+(defmethod handle-request-authentication ((handler cliki-instance)
+					  method request)
+  (setf (request-user request) (request-cookie request "username")))
+
+(defmethod request-cliki ((request request))
+  (labels ((find-handler (handlers)
+	     (cond ((null handlers) nil)
+		   ((typep (caar handlers) 'cliki-instance)
+		    (caar handlers))
+		   (t (find-handler (cdr handlers))))))
+    (find-handler (request-handled-by request))))
+		    
+
+(defmethod handle-request-response ((handler cliki-instance)
+				    (method (eql :head))
+				    request )
+  (or
+   (call-next-method)
+   (multiple-value-bind (page title) (find-page-or-redirect handler request)
+     (cond
+       (page
+	(request-send-headers request :last-modified 
+			      (file-write-date (page-pathname page))))
+       (t nil)))))
+   
+(defmethod handle-request-response ((handler cliki-instance)
+				    (method (eql :get))
+				    request )
+  (or
+   (call-next-method)
+   (multiple-value-bind (page title) (find-page-or-redirect handler request)
+     (let ((action (url-query (request-url request))))
+       (cond
+	 ((not action)
+	  (view-page handler request page title))
+	 ((string-equal action "source")
+	  (view-page-source request page title))
+	 ((string-equal action "download")
+	  (request-redirect
+	   request (merge-url (request-url request)
+			      (caar (page-index page  :download)))))
+	 (t
+	  (request-send-error request 500 "Eh?")))))))
