@@ -12,16 +12,20 @@
 		  :accessor elided-stream-output-stream)))
 
 (defun find-elision-boundary-backward (buffer index max)
-  (let* ((para (or (position #\> buffer :end index :from-end t) 0))
-	 (sentence (or (position #\. buffer :end index :from-end t) 0))
+  (let* ((para (or (position #\Newline buffer
+			     :start (max 0 (- index max))
+			     :end index :from-end t) 0))
+	 (sentence (or (position #\. buffer
+				 :start (max 0 (- index max))
+				 :end index :from-end t) 0))
 	 (stop (max (- index max) para  sentence)))
     (or (position-if-not #'word-char-p
 			 buffer :start (1+ stop) :end index) stop)))
 
 (defun find-elision-boundary-forward (buffer index max)
   (let* ((end (length buffer))
-	 (para (or (position #\> buffer :start index) end))
-	 (sentence (or (position #\. buffer :start index) end))
+	 (para (or (position #\Newline buffer :start index :end (+ index max)) end))
+	 (sentence (or (position #\. buffer :start index :end (+ index max)) end))
 	 (stop (min (+ index max) para sentence)))
     (or (position-if-not #'word-char-p
 			 buffer :start index :end (1+ stop) :from-end t)
@@ -61,12 +65,16 @@
 	       (return-from search-word (values p  (+ p (length word))))
 	       (setf start (1+ p)))
 	   (return-from search-word nil))))))
-	 
+
+
+
 (defmethod buffered-output-stream-write-buffer ((stream elided-stream)
 						&optional force-p)
   (let* ((b (buffered-output-stream-buffer stream))
 	 (out (elided-stream-output-stream stream))
-	 (words (elided-stream-important-words stream))
+	 (words
+	  (remove-if-not (lambda (x) (> (length x) 0))
+			 (elided-stream-important-words stream)))
 	 (threshold (elided-stream-context-characters stream))
 	 (end-index 0)
 	 (start-index 0)

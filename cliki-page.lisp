@@ -21,8 +21,9 @@
   (merge-url (cliki-url-root (page-cliki page))
 	     (urlstring-escape (page-title page))))
 
-(defmethod page-summary ((cliki cliki-instance) (page cliki-page))
-  nil)
+(defmethod page-summary ((cliki cliki-instance) (page cliki-page) search-term)
+  (loop for i in (apply #'search-term-summary cliki page search-term)
+	append `(,i (br))))
 
 (defmethod print-object ((page cliki-page) stream)
   (print-unreadable-object (page stream :type t :identity t)
