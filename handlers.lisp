@@ -1,10 +1,9 @@
 (in-package :cliki)
 
 (defun request-title (request)
-  (let* ((string (request-path-info request))
+  (let* ((string (urlstring-unescape (request-path-info request)))
          (pos (position #\/ string :from-end t)))
-    (urlstring-unescape
-     (subseq string (if pos (1+ pos) 0)))))
+    (subseq string (if pos (1+ pos) 0))))
 
 (defun cliki-get-handler (request arg-string root)
   (let* ((action (url-query (request-url request)))
