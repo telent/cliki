@@ -6,9 +6,10 @@
   :source-pathname #p"telent:cliki;"
   :components ((:file "defpackage")               
                (:file "indexing" :depends-on ("defpackage"))
-               ;(:file "date" :depends-on ("defpackage"))
+	       (:file "index" :depends-on ("defpackage"))
+	       (:file "hyperspec" :depends-on ("defpackage"))
                ;(:file "link-checker" :depends-on ("indexing"))
-               (:file "view" :depends-on ("indexing"))
+               (:file "view" :depends-on ("indexing" "hyperspec"))
                (:file "recent-changes" :depends-on ("defpackage" ))
                (:file "view-source" :depends-on ("defpackage"))
                (:file "edit" :depends-on ("indexing" "recent-changes"))
