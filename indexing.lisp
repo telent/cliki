@@ -44,9 +44,14 @@
                                           root)
                           (cdr l))))))))
 
-(defun update-indexes-for-page (title root)
-  (let* ((pathname (merge-pathnames title root))
-         (links
+(defun update-indexes-for-page (title root
+                                      &aux
+                                      (pathname (merge-pathnames title root)))
+  (unless (eql
+           (unix:unix-file-kind (namestring pathname))
+           :file)
+      (return-from update-indexes-for-page nil))
+  (let* ((links
           (with-open-file (in pathname :direction :input)
             (grep-stream-for-links in '(#\_ #\*) root)))
          (page-links-on-updated-page (cdr (assoc #\_ links)))
@@ -58,7 +63,8 @@
           if (member k page-links-on-updated-page :test #'equal)
           do (add-link-to-hashtable *backlinks* k title)
           else do (remove-link-from-hashtable *backlinks* k title))))
-          
+
+    
 #|
 (with-input-from-string (i " one of _(these) and *(two) of *(those) ")
   (grep-stream-for-links i '(#\_ #\*)))
