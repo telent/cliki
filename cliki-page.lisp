@@ -35,7 +35,7 @@
 			   (if (listp (cadr possible))
 			       (find-token
 				(cadr possible) stream dispatch)
-			       (let ((c2 (peek-char nil stream)))
+			       (let ((c2 (peek-char nil stream nil)))
 				 (when (eql c2 #\( )
 				   (funcall dispatch (cadr possible) 
 					    (read-matched-parens stream))
