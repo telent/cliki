@@ -14,6 +14,26 @@
 			     :defaults pathname)))
 	nil)))
 
+(defmethod (setf page-pathname) (value (page cliki-page))
+  (setf (slot-value page 'pathname) value))
+
+;;; page last-modified times
+;;; (1) a slot in cliki-page stores the last time that it was updated
+;;; from within cliki 
+;;; - P is edited => touch P
+;;; - P links to P' and P' is created => touch P
+;;; - P formerly linked to P' and now doesn't => touch P'
+;;; (2) if the page slot is out of date wrt the filesystem, update it
+
+(defmethod page-last-modified ((page cliki-page))
+  (let ((lm (slot-value page 'last-modified))
+	(d (aif (page-pathname page) (file-write-date it) 0)))
+    (max lm d)))
+
+(defmethod touch-page ((page cliki-page))
+  (setf (page-last-modified page) (get-universal-time)))
+
+
     
 (defmethod (setf page-index) (new-value (page cliki-page) index)
   (setf (cdr (assoc index (page-indices page))) new-value))
