@@ -50,6 +50,9 @@ A.hyperspec { color: #442266 }
 		      (urlstring-unescape term))))))
 	(t `(:body ,term))))
 
+(defmethod format-search-relevance ((cliki cliki-instance) relevance)
+  (format nil "(~,01F% relevant)" (* relevance 100)))
+
 (defun cliki-search-handler (request)
   (let* ((url (request-url request))
 	 (cliki (request-cliki request))
@@ -71,15 +74,19 @@ A.hyperspec { color: #442266 }
 	  (error
 	   (format out "Sorry, your search term could not be read<pre>~A</pre>" (html-escape (princ-to-string error))))
 	  (results
-	   (format out "<table>")
 	   (loop for (name . rel) in (subseq results start end)
 		 for j from start to end
-		 do (format out "~&<tr><td>~A</td><td><a href=\"~A\">~A</a> (~,01F% relevant)</td></tr>"
+		 do (format out "~&<p>~A <b><a href=\"~A\">~A</a></b> ~A<br>~A"
 			    (1+ j)
 			    (urlstring (page-url name))
 			    (page-title name)
-			    (* rel 100)))
-	   (format out "~&</table>")
+			    (format-search-relevance cliki rel)
+			    (let ((s (page-summary cliki name)))
+			      (if s
+				  (format nil "<div style=\"margin-top: -5px; margin-left: 5%; font-size: 80%\">~A</div>~%"
+					  s)
+				  ""))
+			    ))
 	   (print-page-selector
 	    (request-stream request) start 10 (length results)
 	    (format nil "~A?words=~A&start="
@@ -87,6 +94,7 @@ A.hyperspec { color: #442266 }
 		    (urlstring-escape (princ-to-string c-term)))))
 	  (t (format out "Sorry, no pages match your search term.")))
 	t))))
+
 		     
 
 (defvar   *cliki-instance*)
