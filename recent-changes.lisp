@@ -5,9 +5,9 @@
 				       (cliki-data-directory cliki))
 		      :direction :input)
       (loop for entry = (read in nil nil)
-       while (and entry (or (not max-entries) (> max-entries 0)))
-       if max-entries do (decf max-entries)
-       do (push entry (cliki-recent-changes cliki)))))
+	    while (and entry (or (not max-entries) (> max-entries 0)))
+	    if max-entries do (decf max-entries)
+	    do (push entry (cliki-recent-changes cliki)))))
 
 (defun add-recent-change (cliki date title user &optional description)
   (let* ((entry (list date title user description))
@@ -26,13 +26,10 @@
 	  (with-standard-io-syntax (print entry out))))))
 
 (defun same-day-p (date1 date2)
-  (and date1 date2 
-       (let ((start-of-date1
-	      (with-date date1 nil
-		(encode-universal-time 0 0 0 day-of-month month year))))
-	 (<= start-of-date1 date2 (+ start-of-date1 86400)))))
+  (= (floor date1 86400) (floor date2 86400)))
+     
 
-(defun view-recent-changes (request rest-of-url)
+(defun view-recent-changes (request)
   (declare (ignore rest-of-url))
   (let* ((out  (request-stream request))
 	 (cliki (request-cliki request))
@@ -65,7 +62,7 @@
                        this-date day-of-week day-of-month month year))
           if (and title description user)
           do (with-date this-date nil
-               (format out "<br> ~D:~2,'0D <b>~A</b> : ~A -- ~A ~%"
+			(format out "<br> ~D:~2,'0D <b>~A</b> : ~A -- ~A ~%"
                        hour minute
 		       (if title (write-a-href cliki title nil) "?")
                        (car description)
@@ -76,8 +73,7 @@
 				 (url-path (request-url request))))
     ))
 
-(defun rdf-recent-changes (request rest-of-url)
-  (declare (ignore rest-of-url))
+(defun rdf-recent-changes (request)
   (let* ((out  (request-stream request))
 	 (cliki (request-cliki request))
 	 (seen-titles nil)
@@ -123,14 +119,13 @@
 </channel>
 </rss>"
 	    (cliki-title cliki)
-	    (urlstring (cliki-url-root cliki)))))
+	    (urlstring (cliki-url-root cliki)))
+    t))
 
-(defun sexp-recent-changes (request rest-of-url)
-  (declare (ignore rest-of-url))
+(defun sexp-recent-changes (request)
   (let* ((out  (request-stream request))
 	 (cliki (request-cliki request))
 	 (changes (cliki-recent-changes cliki)))
     (request-send-headers request :content-type "text/plain")
-    (print (subseq changes 0 200) out)))
-
-
+    (print (subseq changes 0 200) out)
+    t))
