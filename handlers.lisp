@@ -158,12 +158,13 @@ pre
      (request-stream request))))
 
 (defun search-pages (cliki term)
-  (sort (loop for page being the hash-values of (cliki-pages cliki)
-	      for relevance = (apply #'search-term-relevance cliki page term)
-	      if (> relevance 0)
-	      collect (cons page relevance))
-	#'>
-	:key #'cdr))
+  (when term
+    (sort (loop for page being the hash-values of (cliki-pages cliki)
+		for relevance = (apply #'search-term-relevance cliki page term)
+		if (> relevance 0)
+		collect (cons page relevance))
+	  #'>
+	  :key #'cdr)))
 
 (defun complex-search-term (term)
   (cond ((zerop (length term)) nil)
