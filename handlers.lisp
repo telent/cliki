@@ -71,6 +71,7 @@
 
 (defun export-handlers (base-url directory)
   (create-indexes directory)
+  (restore-recent-changes directory)
   (export-handler base-url (list 'cliki-get-handler directory)
                   :method :get)
   (export-handler base-url (list 'cliki-head-handler directory)
