@@ -4,7 +4,7 @@
 ;;; purpose
 
 
-(defclass buffered-output-stream (sb-gray:fundamental-character-output-stream)
+(defclass buffered-output-stream (fundamental-character-output-stream)
   ((buffer :initarg buffer
 	   :initform (make-array 4096 :element-type 'character
 				 :adjustable t

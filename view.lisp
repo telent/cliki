@@ -185,7 +185,7 @@
 	      term show-relevance-p &allow-other-keys) args
     (let ((pages
 	   (sort 
-	    (loop for page being the hash-values of (cliki:cliki-pages cliki)
+	    (loop for page being the hash-values of (cliki-pages cliki)
 		  for r = (apply #'search-term-relevance cliki page term)
 		  if (> r 0)
 		  collect (list r page))
