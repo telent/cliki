@@ -95,6 +95,7 @@ is set by update-page-indices (at startup and after edits).  "
 			html-tree )
   (html-stream (request-stream request) html-tree))
 
+;; XXX is this reasonable?  I don't think so, really
 (defmethod handle-request-authentication ((handler cliki-view)
 					  method request)
   (setf (request-user request) (request-cookie request "auth-username")))
