@@ -18,5 +18,5 @@
 (defdelegate defmethod cliki-idf ((cliki cliki-skin) term))
 (defdelegate defmethod cliki-short-forms ((cliki cliki-skin) ))
 
-
-(defdelegate defmethod save-page ((cliki cliki-skin) request))
+(defmethod save-page ((cliki cliki-skin) request &optional title)
+  (save-page (skin-real-cliki cliki) request title))

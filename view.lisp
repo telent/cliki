@@ -274,7 +274,6 @@
   (and (eql (elt string 0) #\()
        (subseq string 1 (- (length string) 1))))
 
-;; caller should unescape STRING if it needed it
 
 (defmethod write-a-href ((cliki cliki-view) title stream)
   "Write an A HREF element for the CLiki page TITLE.  STREAM may be an open stream or T or NIL, a la FORMAT"

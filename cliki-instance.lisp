@@ -2,16 +2,30 @@
 
 (defun canonise-title (title)
   "Return the key for the pages hash for the document with title TITLE"
-  (let* ((dot-html-p (string-equal title ".html" :start1
-				   (max 0 (- (length title) 5))))
-	 (title (if dot-html-p (subseq title 0 (- (length title) 5))
-		    title)))
-    (string-downcase  
-     (substitute #\Space #\_
-		 (urlstring-unescape (remove #\% title))))))
+  (if (zerop (length title))
+      nil
+      (nstring-downcase (substitute #\Space #\_ title))))
 
 (defmethod find-page ((cliki cliki-view) title)
-  (gethash (canonise-title title) (cliki-pages cliki)))
+  (gethash (or (canonise-title title) (cliki-default-page-name cliki))
+	   (cliki-pages cliki)))
+
+(defun name-for-url (url)
+  (let* ((path (url-path url))
+	 (slash (position #\/ path :from-end t))
+	 (dothtml (search ".html" path :from-end t)))
+    (urlstring-unescape (subseq path (if slash (1+ slash) 0) dothtml))))
+
+#||
+* (name-for-url (parse-urlstring "http://www.foo.com/blah/bAng%20banG.html"))
+"bAng banG"
+* (name-for-url (parse-urlstring "http://www.foo.com/blah/bAng%20banGhtml"))
+"bAng banGhtml"
+* (name-for-url (parse-urlstring "http://www.foo.com/blah/bAn.g%20banGhtml"))
+"bAn.g banGhtml"
+* (name-for-url (parse-urlstring "http://www.foo.com/blah/bAn.g%20banG.html"))
+"bAn.g banG"
+||# 
 
 (defmethod cliki-idf ((cliki cliki-instance) term)
   (gethash term (slot-value cliki 'idf)))
@@ -49,8 +63,10 @@ is set by update-page-indices (at startup and after edits).  "
 	     (p (make-instance 'cliki-page
 			       :title (car titles)
 			       :names titles
-			       :filename
-			       (make-pathname :name (pathname-name f)) ;ew
+			       ;; f is foo.titles: lose pathname-type
+			       :pathname 
+			       (merge-pathnames (make-pathname
+						 :name (pathname-name f)))
 			       :cliki cliki)))
 	(dolist (title titles)
 	  (setf (gethash (canonise-title title) (cliki-pages cliki))

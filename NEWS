@@ -1,3 +1,41 @@
+								-*- Text -*-
+New in CLiki 0.4.1
+
+* Change CLIKI-INSTANCE class graph.  Now we have CLIKI-VIEW as a parent
+  of CLIKI-INSTANCE.  The approximate division is that CLIKI-VIEW deals
+  with the visual aspects and CLIKI-INSTANCE deals with updating and
+  saving data
+
+* CLIKI-SKIN is a new CLIKI-VIEW subclass demonstrating a way to make
+  a second look and feel for an existing cliki.
+
+* New CLIKI-PAGE-SURROUND method replaces CLIKI-PAGE-HEADER and
+  CLIKI-PAGE-FOOTER.  WITH-PAGE-SURROUND macro allows any response
+  handler to reasonably conveniently use the standard surround for
+  some cliki it's associated with
+
+* New class AUTHED-CLIKI does cookie-based authentication for clikis that 
+  you don't want just anyone to edit.  Badly, though.  Feel free to send
+  patches
+
+* At last, proper escaping of page pathnames.  Page titles may now contain
+  interesting characters like #\#, #\., #\+ etc
+
+  If you have any pages stored in files with even mildly interesting 
+  names, they will change: what was "Foo Bar" is now "Foo=20Bar", for
+  example.  The old names are still read, and updated to new names on
+  SAVE-PAGE (i.e. after edits)
+
+* #\Space and #\_ are treated as equivalent in page names, just as #\A
+  and #\a are.
+
+* SAVE-PAGE is now a GF specialkised on CLIKI-VIEW.  Might be usable
+  for e.g. database-backed clikis.
+
+* Bug fix: admin/recent-changes.dat is created if not found
+
+* Some HTML cleanup
+
 New in CLiki 0.4.0
 
 * Visual makeover.  Thanks to Miles Egan for doing the hard work, and

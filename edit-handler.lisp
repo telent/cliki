@@ -118,40 +118,48 @@ Describe _(~A) here
 	    when (typep el 'string)
 	    do (write-sequence el out-file)))))
 
-(defun filename-for-title (cliki title)
-  ;; XXX should generate a guaranteed unique filename (and still
-  ;; preferably one that is vaguely like the page title)
-  (remove #\. title))
-
-(defmethod save-page ((cliki cliki-instance) request)
-  (multiple-value-bind (page title)
+(defmethod save-page ((cliki cliki-instance) request &optional title)
+  (multiple-value-bind (page titl)
       (find-page-or-redirect cliki request)
-    (let* ((page
-	    (or page
-		(make-instance 'cliki-page
-			       :title title :names (list title)
-			       :filename
-			       (filename-for-title
-				(request-cliki request) title)
-			       :cliki cliki)))
-	   (filename (page-pathname page))
-	   (body (request-body request))
-	   (title (pathname-name filename))
-	   (title-filename (merge-pathnames
-			    (make-pathname :type "titles") filename)) )
-      (save-stream cliki request (page-pathname page))
-      (with-open-file (out-file title-filename :direction :output)
-	(with-standard-io-syntax
-	  (write (page-names page) :stream out-file)))
-      (add-recent-change cliki (get-universal-time) title
-			 (cliki-user-name
-			  cliki (or (request-user request)
-				    (body-param "name" body)))
-			 (body-param "summary" body))
-      (setf (gethash (canonise-title title) (cliki-pages cliki)) page)
-      (update-page-indices cliki page)
-      (update-idf cliki)
-      title)))
+    (labels ((title-file (n) (merge-pathnames
+			      (make-pathname :type "titles") n)))
+      (let* ((title (or title titl))
+	     (*default-pathname-defaults* (cliki-data-directory cliki))
+	     (filename (merge-pathnames (escape-for-filename title)))
+	     (page
+	      (or page
+		  (make-instance 'cliki-page
+				 :title title :names (list title)
+				 :pathname filename
+				 :cliki cliki)))
+	     (old-filename (merge-pathnames (page-pathname page)))
+	     (body (request-body request))
+	     (title-filename (title-file filename)))
+	(save-stream cliki request filename)
+	(with-open-file (out-file title-filename :direction :output)
+	  (with-standard-io-syntax
+	    (write (page-names page) :stream out-file)))
+	;; in cliki 0.4.1 we changed the mapping from title => pathname
+	;; to cope with characters like # . / % etc.  Old filenames
+	;; continue to work, but when pages are saved they'll use the
+	;; new name.  To avoid needing to migrate all repositories at
+	;; once, we do it lazily on save-page
+	(unless (string= (namestring filename) (namestring old-filename))
+	  (let ((names (list old-filename (title-file old-filename))))
+	    (setf (page-pathname page) filename)
+	    (dolist (f names)
+	      (when (probe-file f)
+		(format *terminal-io* "Deleting ~S ~%" f)
+		(delete-file f))) ))
+	(add-recent-change cliki (get-universal-time) title
+			   (cliki-user-name
+			    cliki (or (request-user request)
+				      (body-param "name" body)))
+			   (body-param "summary" body))
+	(setf (gethash (canonise-title title) (cliki-pages cliki)) page)
+	(update-page-indices cliki page)
+	(update-idf cliki)
+	title))))
 
 (defmethod handle-request-response ((handler edit-handler)
 				    (method (eql :post))
@@ -171,7 +179,7 @@ Describe _(~A) here
 	  ;; should be interpreted as a request to clear it
 	  (setf cookie (cliki-user-cookie cliki nil))))
     (handler-case
-	(setf title (save-page cliki request ))
+	(setf title (save-page cliki request))
       (error (c)
 	(request-send-error request 500 "Unable to save file: ~A" c))
       (:no-error (c)

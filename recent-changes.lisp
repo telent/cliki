@@ -43,10 +43,9 @@
     (with-page-surround (cliki request "Recent Changes")
       (if (= start 0)
 	  (format out
-		  "<blockquote>This page is updated automatically.  There's also an RDF RSS feed at <a href=\"recent-changes.rdf\">~A</a> -- ~A"
+		  "<blockquote>This page is updated automatically.  There's also an <a href=\"recent-changes.rdf\">RSS 0.91</a> RDF feed"
 		  (urlstring
-		   (merge-url (request-url request) "recent-changes.rdf"))
-		  (write-a-href cliki "Daniel Barlow" nil))
+		   (merge-url (request-url request) "recent-changes.rdf")))
 	  (format out "<p>Older entries (starting at ~D)</p>~%" start))
       (loop for (this-date title user . description)
 	    in (subseq changes start
@@ -67,7 +66,7 @@
 				  (if title (write-a-href cliki title nil) "?")
 				  (car description)
 				  (if user (write-a-href cliki user nil) ""))))
-      (princ "<p>" out)
+      (princ "</blockquote><p>" out)
       (print-page-selector out start number (length changes)
 			   (format nil "~A?start="
 				   (url-path (request-url request))))

@@ -1,11 +1,8 @@
 (in-package :cliki)
 
-(defmethod page-pathname ((page cliki-page))
-  (merge-pathnames (page-filename page)
-		   (cliki-data-directory (page-cliki page))))
-
 (defmethod page-index ((page cliki-page) index)
   (cdr (assoc index (page-indices page))))
+
 
 (defmethod (setf page-index) (new-value (page cliki-page) index)
   (setf (cdr (assoc index (page-indices page))) new-value))
@@ -28,6 +25,14 @@
 (defmethod print-object ((page cliki-page) stream)
   (print-unreadable-object (page stream :type t :identity t)
 			   (princ (page-title page) stream)))
+
+(defun escape-for-filename (title)
+  (with-output-to-string (o)
+    (labels ((maybe-escape (char)
+	       (cond ((alphanumericp char) (princ char o))
+		     ((member char '(#\, #\! #\-)) (princ char o))
+		     (t (format o "=~X" (char-code char))))))
+      (map 'nil #'maybe-escape title))))
 
 (defun scan-stream (chars stream output dispatch)
   (labels ((find-token (chars stream dispatch)

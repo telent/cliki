@@ -2,14 +2,9 @@
 (defmethod cliki-default-page-name ((cliki cliki-view)) nil "index")
 (defmethod find-page-or-redirect ((cliki cliki-view)
 				  (request request))
-  (let* ((string (urlstring-unescape (request-path-info request)))
-         (pos (position #\/ string :from-end t))
-         (search-string (subseq string (if pos (1+ pos) 0)))
+  (let* ((search-string (name-for-url (request-url request)))
 	 (query (url-query (request-url request)))
-         (actual (find-page cliki
-			    (if (> (length search-string) 0)
-				search-string
-				(cliki-default-page-name cliki)))))
+         (actual (find-page cliki search-string)))
     (cond
       ((not actual)			; no page found
        (values nil search-string))
