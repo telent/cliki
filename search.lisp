@@ -41,7 +41,7 @@
 		     for stem = (stem-for-word word)
 		     when (interesting-word-p stem)
 		     collect (cons stem 1))))
-    (if doc-terms
+    (if (and doc-terms terms)
 	(document-vector-cosine terms doc-terms)
 	0)))
 

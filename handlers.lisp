@@ -166,7 +166,8 @@ pre
 	:key #'cdr))
 
 (defun complex-search-term (term)
-  (cond ((eql (elt term 0) #\()
+  (cond ((zerop (length term)) nil)
+	((eql (elt term 0) #\()
 	 (let ((*read-eval* nil)
 	       (*package* (find-package :keyword)))
 	   (ignore-errors
