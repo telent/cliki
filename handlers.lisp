@@ -225,8 +225,8 @@ pre
 		      (url-path url)
 		      (urlstring-escape
 		       (format nil "~S" c-term)))))
-	    (t (format out "Sorry, no pages match your search term.")))
-	  t)))))
+	    (t (format out "Sorry, no pages match your search term."))))
+	t))))
 
 		     
 
