@@ -104,64 +104,98 @@
 
 (defun write-stream-to-stream (cliki in-stream out-stream)
   "Read from IN-STREAM and write to OUT-STREAM, substituting weird markup language elements as we go. "  
-  (let ((eof (gensym))
-        (newlines 0)
-        (returns 0))
-    (do ((c (read-char in-stream nil eof) (read-char in-stream nil eof))
-         (c1 (peek-char nil in-stream nil) (peek-char nil in-stream nil)))
-        ((eq c eof) nil)
-      (cond
-       ((and (member c '(#\Newline #\Return))
-             (not (member c1 '(#\Newline #\Return))))
-        (if (or (> newlines 1) (> returns 1))
-            (unless (eql c1 #\<)
-              (write-sequence "<p>" out-stream)))
-        (setf newlines 0 returns 0))
-       ((eql c #\Newline)
-        (incf newlines)
-        (write-char c out-stream))
-       ((eql c #\Return)
-        (incf returns)
-        (write-char c out-stream))
-       ;; Before this method gets much longer, the following stuff wants to
-       ;; be turned into dispatches to a helper function per special char
-       ((and (eql c #\/) (eql c1 #\())  ; search
-        (write-search-result
-         cliki (read-matched-parens in-stream) out-stream))
-       ((and (eql c #\>) (eql c1 #\())  ; download link
-	(let ((url (strip-outer-parens (read-matched-parens in-stream))))
-	  (format out-stream "<a class=\"download\" href=\"~A\"><b>Download from ~A</b></a>"
-		  url url)))
-       ((and (member c '(#\* #\_)) (eql c1 #\())  ; link
-        (write-a-href
-	 cliki (strip-outer-parens (read-matched-parens in-stream)) out-stream))
-       ((and (eql c #\#) (eql (char-upcase c1) #\H))
-        (let* ((h (read-char in-stream))
-	       (term (read-matched-parens in-stream))
-	       (stripped-term (strip-outer-parens term))
-               (url (and stripped-term (hyperspec-url stripped-term ))))
-          (cond (url
-		 (format out-stream "<a class=\"hyperspec\" href = \"~a\"><b>~a</b></a>" url stripped-term))
-		(stripped-term
-		 (write-string term out-stream))
-		(t
-		 (format out-stream "~C~C~A" #\# h term)))))
-       (t (write-char c out-stream)) ))))
+  (let ((newlines 0)
+        (returns 0)
+	(eof (gensym "EOF"))
+	(buffer))
+    (labels ((dispatch (token arg)
+	       (let ((*read-eval* nil)
+		     (*package* (find-package "KEYWORD")))
+		 (if (eq token :long-form) 
+		     (apply #'html-for-keyword cliki (read-from-string arg))
+		     (html-for-keyword 
+		      cliki (intern (string-upcase token) :keyword)
+		      (strip-outer-parens arg)))))
+	     (scan ()
+	       (handler-case
+		   (scan-stream (cliki-short-forms cliki)
+				in-stream #'dispatch)
+		 (end-of-file (eof-c) (list eof))))       	       
+	     (more-buffer ()
+	       (setf buffer (nconc buffer (scan))))
+	     (peekc ()
+	       (unless buffer (more-buffer))
+	       (car buffer))
+	     (readc ()
+	       (unless buffer (more-buffer))
+	       (prog1 (car buffer)
+		 (setf buffer (cdr buffer)))))
+      (do ((c (readc)  (readc))
+	   (c1 (peekc) (peekc)))
+	  ((eq c eof) nil)
+	(cond
+	  ((stringp c) (write-sequence c out-stream))
+	  ((and (member c '(#\Newline #\Return))
+		(not (member c1 '(#\Newline #\Return))))
+	   (if (or (> newlines 1) (> returns 1))
+	       (unless (eql c1 #\<)
+		 (write-sequence "<p>" out-stream)))
+	   (setf newlines 0 returns 0))
+	  ((eql c #\Newline)
+	   (incf newlines)
+	   (write-char c out-stream))
+	  ((eql c #\Return)
+	   (incf returns)
+	   (write-char c out-stream))
+	  (t (write-char c out-stream)))))))
 
-(defun write-search-result (cliki string stream)
+(defgeneric html-for-keyword (cliki keyword &rest rest &key &allow-other-keys))
+(defmethod html-for-keyword ((cliki cliki-instance)
+			     (keyword t) &rest args)
+  (format nil "<b> [unrecognised ~A keyword occurred here: args ~S] </b>"
+	  keyword args))
+
+(defmethod html-for-keyword ((cliki cliki-instance) (keyword (eql :topic))
+			     &rest args &aux (arg (car args)))
+  (write-a-href cliki arg nil))
+
+(defmethod html-for-keyword ((cliki cliki-instance) (keyword (eql :link))
+			     &rest args &aux (arg (car args)))
+  (write-a-href cliki arg nil))
+
+(defmethod html-for-keyword ((cliki cliki-instance) (keyword (eql :search))
+			     &rest args &aux (arg (car args)))
+  (legacy-search-result cliki arg nil))
+
+(defmethod html-for-keyword ((cliki cliki-instance) (keyword (eql :clhs))
+			     &rest args &aux (arg (car args)))
+  (let* ((url (hyperspec-url arg)))
+    (if url
+	(format nil
+		"<a class=\"hyperspec\" href = \"~a\"><b>~a</b></a>"
+		url arg)
+	arg)))
+
+(defmethod html-for-keyword ((cliki cliki-instance) (keyword (eql :download))
+			     &rest args &aux (arg (car args)))
+  (format nil "<a class=\"download\" href=\"~A\"><b>Download from ~A</b></a>"
+	  arg arg))
+
+
+(defun legacy-search-result (cliki string stream)
+  ;; this business with read-from-string is a hangover from Ye Olde
+  ;; search syntax
   (let* ((*read-eval* nil)
-         (form (read-from-string string nil nil)))
+         (form (read-from-string (format nil "( ~A )" string) nil nil)))
     (destructuring-bind (term &key attribute match case-sensitive) form
       (let ((titles
              (search-pages cliki term :attribute attribute :match match  
                            :case-sensitive case-sensitive)))
-        (write-sequence
-         (html
-          `(ul
-            ,@(mapcar (lambda (x) `(li ((a :class "internal"
-                                           :href ,(urlstring-escape x)) ,x)))
-                      titles)))
-         stream)))))
+	(html
+	 `(ul
+	   ,@(mapcar (lambda (x) `(li ((a :class "internal"
+					:href ,(urlstring-escape x)) ,x)))
+		     titles)))))))
 
 (defun strip-outer-parens (string)
   (and (eql (elt string 0) #\()
@@ -175,28 +209,6 @@
     (if (find-page cliki title)
         (format stream "<a class=\"internal\" href=\"~A\" >~A</a>" escaped title)
       (format stream "~A<a class=\"internal\" href=\"~A?edit\" >?</a>" title escaped))))
-
-
-(defun write-code (in-string out)
-  ;; should test (car form) for language and inline/display distinction
-  ;; should do substitution on (cadr form) to turn < into &lt;
-  (let* ((*read-eval* nil)
-         (form (read-from-string in-string nil nil)))
-    (destructuring-bind (language &key (case :downcase)
-                                  mode right-margin) (car form)
-      (let* ((*print-case* case)
-             (*print-right-margin* right-margin)
-             (text (with-output-to-string (o)
-                     (dolist (f (cdr form))
-                       (pprint f o)))))
-        (format out (if (eql mode :display) "<pre>" "<tt>"))
-        (with-input-from-string (i text)
-          (do ((c (read-char i nil nil) (read-char i nil nil)))
-              ((not c) (return))
-            (if (eql c #\<)
-                (princ "&lt;" out)
-              (write-char c out))))
-        (format out (if (eql mode :display) "</pre>" "</tt>"))))))
 
 (defun read-matched-parens (stream)
   "Read from STREAM until we have seen as many #\) as #\(, returning
