@@ -19,6 +19,20 @@
 ;;; creating them at this time.  So, how can add-to-index-for-page get
 ;;; hold of the tf index?
 
+(defun read-sentence (stream)
+  "Read until first #\. or non-graphic character outside of an HTML tag"
+  (with-output-to-string (o)
+    (let (c in-tag)
+      (loop 
+       (setf c (read-char stream nil nil))
+       (when (and (not in-tag)
+		  (or (not c)
+		      (not (graphic-char-p c))
+		      (eql c #\.))) (return))
+       (if (and (not in-tag) (eql c #\<)) (setf in-tag t))
+       (unless in-tag (princ c o))
+       (if (and in-tag (eql c #\>)) (setf in-tag nil))))))
+
 (defgeneric update-page-indices (cliki page))
 (defmethod update-page-indices ((cliki cliki-instance) (page cliki-page))
   (let ((indices nil)
@@ -52,18 +66,7 @@
 	(update :tf  w :weight 6))
       (with-open-file (in-stream (page-pathname page))
 	(let* ((start (file-position in-stream)))
-	  (setf (page-first-sentence page)
-		(with-output-to-string (o)
-		  (let (c in-tag)
-		    (loop 
-		     (setf c (read-char in-stream nil nil))
-		     (when (and (not in-tag)
-				(or (not c)
-				    (not (graphic-char-p c))
-				    (eql c #\.))) (return))
-		     (if (and (not in-tag) (eql c #\<)) (setf in-tag t))
-		     (unless in-tag (princ c o))
-		     (if (and in-tag (eql c #\>)) (setf in-tag nil))))))
+	  (setf (page-first-sentence page) (read-sentence in-stream))
 	  (file-position in-stream start)) ; rewind
 	(scan-stream (cliki-short-forms cliki)
 		     in-stream #'do-body-words #'dispatch))
