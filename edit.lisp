@@ -3,9 +3,9 @@
 ;;; need to put in check for simultaneous edits
 
 (defun edit-page (request title root)
-  (let* ((out (request-stream request))
-         (view-href (format nil "<a href=\"~A\">~A</a>"
-                            (request-path-info request) title)))
+  (let ((out (request-stream request))
+        (view-href (format nil "<a href=\"~A\">~A</a>"
+                           (request-path-info request) title)))
     (request-send-headers request :expires (get-universal-time))
     (format (request-stream request)
             "<html><head><title>Cliki : Edit ``~A''</title></head>
