@@ -9,6 +9,14 @@ New in CLiki 0.4.3
 
 * Legacy searches now print this out.
 
+* Beginning of the long slow process to separate generic cliki engine
+  stuff from www.cliki.net stuff: new cliki-net class that you
+  probably don't want to use unless you're me  
+
+* Indexing tweaks mean startup on big clikis may be a bit faster
+
+* rss bug fix
+
 * *(Uncategorized) marker added to default text for new pages.
 
 New in CLiki 0.4.2

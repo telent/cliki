@@ -165,6 +165,7 @@ _(topic markers) and remove this text
 	  (check-page-save-allowed cliki page version username)
 	  (save-stream cliki request pn)
 	  (with-open-file (out-file (title-file pn)  :direction :output
+				    :if-does-not-exist :create
 				    :if-exists :overwrite)
 	    (with-standard-io-syntax
 	      (write (page-names page) :stream out-file)))
