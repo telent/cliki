@@ -32,7 +32,7 @@
 (defgeneric cliki-user-cookie (cliki user))
 (defmethod cliki-user-cookie ((cliki cliki-instance) user)
   (format nil "username=~A; path=~A; expires=~A; domain=~A"
-	  (urlstring-escape (user-name user))
+	  (urlstring-escape (cliki-user-name cliki user))
 	  (url-path (cliki-url-root cliki))
 	  "Sun, 01-Jun-2036 00:00:01 GMT"
 	  (url-host (cliki-url-root cliki))))

@@ -78,7 +78,7 @@ is set by update-page-indices (at startup and after edits).  "
 
 (defmethod handle-request-authentication ((handler cliki-instance)
 					  method request)
-  (setf (request-user request) (request-cookie request "username")))
+  (setf (request-user request) (request-cookie request "auth-username")))
 
 (defmethod request-cliki ((request request))
   (labels ((find-handler (handlers)
