@@ -20,7 +20,8 @@
 				 :end index :from-end t) 0))
 	 (stop (max (- index max) para  sentence)))
     (or (position-if-not #'word-char-p
-			 buffer :start (1+ stop) :end index) stop)))
+			 buffer :start (min (1+ stop) index) :end index)
+	stop)))
 
 (defun find-elision-boundary-forward (buffer index max)
   (let* ((end (length buffer))
@@ -60,7 +61,7 @@
 	    (end (and p (position-if-not #'word-char-p buffer :start p))))
        (if p
 	   (if (and
-		(not (word-char-p (elt buffer (1- p))))
+		(or (< p 1) (not (word-char-p (elt buffer (1- p)))))
 		(equal stem (stem-for-word (subseq buffer p end))))
 	       (return-from search-word (values p  (+ p (length word))))
 	       (setf start (1+ p)))

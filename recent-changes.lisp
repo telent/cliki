@@ -27,7 +27,6 @@
 
 (defun same-day-p (date1 date2)
   (= (floor date1 86400) (floor date2 86400)))
-     
 
 (defun view-recent-changes (request)
   (declare (ignore rest-of-url))

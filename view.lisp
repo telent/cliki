@@ -32,7 +32,12 @@
 		    (td ((a :href ,(ahref "#")) "[ Home ]"))
 		    (td ((a :href ,(ahref "Recent%20Changes")) "[ Recent Changes ]"))
 		    (td ((a :href ,(ahref "CLiki")) "[ About CLiki ]"))
-		    (td ((a :href ,(ahref "Text%20Formatting")) "[ Text Formatting ]")))
+		    (td ((a :href ,(ahref "Text%20Formatting")) "[ Text Formatting ]"))
+		    (td ((a :onclick
+			    ,(format nil "if(name=window.prompt('New page name ([A-Za-z0-9 ])')) document.location='~Aedit/'+name ;return false;"
+				     (urlstring home))
+			    :href "#")
+			 "[ Create new page ]")))
 		   ))
 		 (hr)
 		 (h1 ,title)

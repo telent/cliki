@@ -35,7 +35,8 @@
 	       (:file "buffered-output-stream" :depends-on
 		      ("buffered-output-stream-class"))
                (:file "elided-stream" :depends-on ("buffered-output-stream"))
-               (:file "search" :depends-on ("index" "elided-stream"))
+	       (:file "strip-html-stream" :depends-on ("buffered-output-stream"))
+               (:file "search" :depends-on ("index" "elided-stream" "strip-html-stream"))
                (:file "handlers" :depends-on
                       ("view" "index" "view-source" "edit" "search"))
 	       (:static-file "TODO")
