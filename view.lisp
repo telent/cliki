@@ -167,7 +167,7 @@
     (request-send-headers request :conditional t :last-modified lmtime)
     (with-page-surround (cliki request title
 			       (unless google 
-				 '(((META :NAME "ROBOTS" :CONTENT "NOFOLLOW")))))
+				 '(((META :NAME "ROBOTS" :CONTENT "NOINDEX,NOFOLLOW")))))
       (if page
 	  (progn
 	    (let* ((topics 
