@@ -122,7 +122,7 @@ intended for use as a FORMAT Tilde-slash function"
 (defun write-a-href (title root stream)
   "Write an A HREF element for the CLiki page TITLE found in the directory ROOT.  STREAM may be an open stream or T or NIL, a la FORMAT"
   (let ((escaped (urlstring-escape title)))
-    (if (probe-file (merge-pathnames title root))
+    (if (probe-file (merge-pathnames (find-page-name title root) root))
         (format stream "<a class=internal href=\"~A\" >~A</a>" escaped title)
       (format stream "~A<a class=internal href=\"~A?edit\" >?</a>" title escaped))))
 
