@@ -14,6 +14,7 @@
    (pathname :initarg :pathname)	;note no accessor
    (backlinks :accessor page-backlinks :initform nil)
    (topics :accessor page-topics :initform nil)
+   (last-modified :initform (get-universal-time))
    ))
 
 
