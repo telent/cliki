@@ -4,14 +4,12 @@ See http://ww.telent.net/cliki/TODO%20List for features
 
 Look at the source for XXX ("fix me eventually") and TODO ("fix me soon")
 comments for things to do in support of those features.  You can use
-the supplied Perl script to do this for you: "perl TODO.pl *.lisp"
+the supplied Perl script to do this for you: "perl make-TODO.pl *.lisp"
 
 view-recent-changes has calls to cliki:dayname that prolly ought to
 use net.telent.date
 
-Let's punt on aliases for the moment.  eventually we need to be able
-to edit a page's aliases: another box on the edit page?
+We need to be able to edit a page's aliases, which involves UI design
+of some kind.  Another box on the edit page?
 
-Searches (/ syntax) are borken
-
-Test asd dependcencies
+Test asd dependencies
