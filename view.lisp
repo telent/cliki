@@ -1,33 +1,51 @@
 (in-package :cliki)
 
-(defun phtml-view-handler (request arg-string root)
-  (let* ((file (merge-pathnames arg-string root))
-         (out (request-stream request)))
+(defun view-page (request title root)
+  (let ((out  (request-stream request)))
     (request-send-headers request)
     (format out
             "<html><head><title>Cliki : ~A</title></head>
-<body><h1>~A</h1>~%" arg-string arg-string)
-    (if (probe-file file)
-        (with-open-file (in file :direction :input)
-          (if (ignore-errors (peek-char nil in nil))
-              (write-stream-to-stream (request-base-url request) in out)))
-      (format out
-              "This page doesn't exist yet, but you can create it if you like"))
-    (format out "<hr><a href=\"edit/~A\">Edit this page</a>"
-            arg-string))))
+<body><h1>~A</h1>~%" title title)
+    (handler-case
+     (with-open-file (in (merge-pathnames title root) :direction :input)
+       (write-stream-to-stream in out))
+     (file-error (e)                    ;probably just doesn't exist
+                 (declare (ignore e))
+                 (format out
+                         "This page doesn't exist yet.  Please create it if you want to" ))
+     (error (e)
+            (format out
+                    "Some error occured: <pre>~A</pre>" e)))
+    (format out "<hr><a href=\"~A?edit\">Edit this page</a>"
+            (urlstring-escape title))))
 
-
-(defun write-stream-to-stream (base-url in-stream out-stream)
-  (let ((eof (gensym)))
+(defun write-stream-to-stream (in-stream out-stream)
+  "Read from IN-STREAM and write to OUT-STREAM, substituting weird markup language elemants as we go.  IN-STREAM must be a FILE-STREAM or SYNONYM-STREAM associeted with same if internal links are to work"
+  (let ((eof (gensym))
+        (newlines 0)
+        (returns 0))
     (do ((c (read-char in-stream nil eof) (read-char in-stream nil eof))
          (c1 (peek-char nil in-stream nil) (peek-char nil in-stream nil)))
         ((eq c eof) nil)
       (cond
+       ((and (member c '(#\Newline #\Return))
+             (not (member c1 '(#\Newline #\Return))))
+        (if (or (> newlines 1) (> returns 1))
+            (unless (eql c1 #\<)
+              (write-sequence "<p>" out-stream)))
+        (setf newlines 0 returns 0))
+       ((eql c #\Newline)
+        (incf newlines)
+        (write-char c out-stream))
+       ((eql c #\Return)
+        (incf returns)
+        (write-char c out-stream))
        ((and (eql c #\/) (eql c1 #\())
         (write-search-result (read-matched-parens in-stream) out-stream))
        ((and (eql c #\_) (eql c1 #\())
         (write-a-href
-         base-url (strip-outer-parens (read-matched-parens in-stream))
+         (strip-outer-parens (read-matched-parens in-stream))
+         (merge-pathnames (make-pathname :name :wild) in-stream)
          out-stream))
        ((and (eql c #\') (eql c1 #\())
         (write-code
@@ -41,42 +59,33 @@
 (defun strip-outer-parens (string)
   (subseq string 1 (- (length string) 1)))
 
-(defun write-a-href (base string stream)
-  (format stream "<a href=\"~A\" >~A</a>"
-          (urlstring (merge-url base string))
-          string)))
+;; caller should unescape STRING if it needed it
 
-(rt:deftest
- write-a-href 
- (with-output-to-string (o)
-   (write-a-href "http://ww.telent.net/foo?" "bar baz" o))
- "<a href=\"http://ww.telent.net/foo?bar%20baz\" >bar baz</a>")
+(defun write-a-href (title root stream)
+  (let ((escaped (urlstring-escape title)))
+    (if (probe-file (merge-pathnames title root))
+        (format stream "<a href=\"~A\" >~A</a>" escaped title)
+      (format stream "~A<a href=\"~A?edit\" >?</a>" title escaped))))
+
 
 (defun write-code (in-string out)
   ;; should test (car form) for language and inline/display distinction
   ;; should do substitution on (cadr form) to turn < into &lt;
-  (let* ((form (read-from-string in-string nil nil))
-         (*print-case* :downcase)
-         (text (with-output-to-string (o)
-                 (pprint (cadr form) o))))
-    (format out "<pre>")
-    (with-input-from-string (i text)
-      (do ((c (read-char i nil nil) (read-char i nil nil)))
-          ((not c) (return))
-        (if (eql c #\<)
-            (princ "&lt;" out)
-          (write-char c out))))
-    (format out "</pre>")))
-
-(rt:deftest
- write-stream
- (with-input-from-string
-   (i "hello _(a link) '(cl (defun foo(x) (* 2 x))) ")
-   (with-output-to-string (o)
-     (write-stream-to-stream
-      (parse-urlstring "http://ww.telent.net/cliki?") i o)))
- #.(format nil "hello <a href=\"http://ww.telent.net/a link\" >a link</a> <pre>~%(defun foo (x) (* 2 x))</pre> "))
-
+  (let ((form (read-from-string in-string nil nil)))
+    (destructuring-bind (language &key (case :downcase)
+                                  mode right-margin) (car form)
+      (let* ((*print-case* case)
+             (*print-right-margin* right-margin)
+             (text (with-output-to-string (o)
+                     (pprint (cadr form) o))))
+        (format out (if (eql mode :display) "<pre>" "<tt>"))
+        (with-input-from-string (i text)
+          (do ((c (read-char i nil nil) (read-char i nil nil)))
+              ((not c) (return))
+            (if (eql c #\<)
+                (princ "&lt;" out)
+              (write-char c out))))
+        (format out (if (eql mode :display) "</pre>" "</tt>"))))))
 
 (defun read-matched-parens (stream)
   "Read from STREAM until we have seen as many #\) as #\(, returning
@@ -103,26 +112,4 @@ this is left in the output but not counted by the bracket matcher"
             (with-input-from-string (i "(foo(bar(bax)bo\\)ol))fluff")
                                     (read-matched-parens i))
             "(foo(bar(bax)bo\\)ol))")
-
-
-;;; I really hate this kind of stuff.  Should we unescape?  Should we only
-;;; unescape occurences of CHAR?  Who knows ...
-;;; (actually this isn't used anyway)
-
-(defun read-until-char (stream char)
-  "Read text from STREAM until the first unescaped occurrence of CHAR,
-or end of file.  Returns as multiple values (1) the text read,
-excluding CHAR, and (2) CHAR if it was read (i.e. not end of file).
-Escape a character by preceding it with a backslash character, which
-will be removed in the output"
-  (let ((eof (gensym)))
-    (with-output-to-string (out)
-      (loop
-       (let ((c (read-char stream nil eof)))
-         (if (eql c eof) (return (values out nil)))
-         (if (eql c #\\)
-             (setf c (read-char stream nil eof))
-           (if (eql c char) (return (values out c))))
-         (write-char c)
-         (write-char c out))))))
 
