@@ -70,10 +70,10 @@ is set by update-page-indices (at startup and after edits).  "
 
 
     (install-handler cliki 'cliki-search-handler "admin/search" nil)
-    (install-handler cliki `(view-recent-changes) "Recent%20Changes" t)
+    (install-handler cliki `(view-recent-changes) "Recent%20Changes" nil)
     (install-handler cliki `(rdf-recent-changes) "recent-changes.rdf" t)
     (install-handler cliki `(sexp-recent-changes) "recent-changes.sexp" t)
-    (install-handler cliki `(view-recent-changes) "Recent+Changes" t)
+    (install-handler cliki `(view-recent-changes) "Recent+Changes" nil)
   ))
 
 (defmethod render-html (request
