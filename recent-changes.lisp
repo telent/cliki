@@ -90,24 +90,33 @@
       (loop for (date title user . description)
 	    in changes
 	    if (> (length seen-titles) 15) return nil end
-	    if (assoc title seen-titles :test #'string=)
-	    do (incf (fourth (assoc title seen-titles :test #'string=)))
-	    else
-	    do (push (list title date description 1) seen-titles)
-	    end)
+	    do (push (list title date description) seen-titles))
       (let ((items
-	     (loop for (title date description edits)
+	     (loop for (title date description)
 		   in (nreverse seen-titles)
 		   for f-date = (datefmt date)
-		   for descr = (if (> edits 1)
-				   (format nil "~A edits" edits)
-				   (car description))
+                   for page = (find-page cliki title)
+                   for newest = (car (page-versions page))
+                   for new-pathname = (page-pathname page)
+                   for old-pathname = (page-pathname page :version (1- newest))
+		   for descr = (car description)
 		   for url = (urlstring (merge-url (cliki-url-root cliki)
 						   (urlstring-escape title)))
 		   collect `("item" () 
-				    ("title" () ,f-date " : " ,title" : " ,descr)
+				    ("title" () ,title" : " ,descr)
 				    ("pubDate" () ,(date:universal-time-to-http-date date))
-				    ("link" ()  ,url)))))
+				    ("link" ()  ,url)
+			     ("description" ()
+                              ,(if (probe-file old-pathname)
+				   (with-output-to-string (s)
+				     (write-sequence "<pre>" s)
+				     (or
+				      (ignore-errors
+				        (diff::print-unified-diff   
+					 old-pathname new-pathname s))
+				      (format s "(diff failed)"))
+				     (write-sequence "</pre>" s))
+				   "New page"))))))
 	(format stream "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>~%")
 	(xmls:write-xml
 	 `("rss" (("version" "0.92"))

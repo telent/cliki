@@ -3,20 +3,20 @@
 (in-package :cliki-system)
 
 (defsystem cliki
-  :depends-on (ARANEIDA net-telent-date xmls cl-ppcre)
-  :version "0.4.3"
+  :depends-on (ARANEIDA net-telent-date xmls diff cl-ppcre)
+  :version "0.4.4"
   :components ((:file "defpackage")               
 	       (:file "utilities" :depends-on ("defpackage"))
 	       (:file "cliki-instance-class" :depends-on ("defpackage"))
 	       (:file "cliki-instance" :depends-on
 		      ("utilities" "cliki-instance-class"))
 	       (:file "cliki-page-class" :depends-on ("defpackage"))
-	       (:file "cliki-page" :depends-on ("cliki-page-class" "cliki-instance-class"))
+	       (:file "cliki-page" :depends-on ("cliki-page-class" "cliki-instance-class" "utilities"))
 	       (:file "cliki-request-class" :depends-on ("defpackage"))
 	       (:file "cliki-request" :depends-on
 		      ("cliki-instance-class" "cliki-request-class"))
 	       (:file "edit-handler-class" 
-		      :depends-on ("defpackage" "utilities"))
+		      :depends-on ("defpackage" "utilities" "recent-changes"))
 	       (:file "edit-handler" :depends-on ("cliki-request-class"
 						  "cliki-page-class"
 						  "view"
