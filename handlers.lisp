@@ -12,46 +12,8 @@ A.internal { color: #0077bb }
 A.hyperspec { color: #442266 }
 " stream))
 
-(defun css-file-handler (request rest-of-url)
-  (request-send-headers request :content-type "text/plain")
-  (cliki-css-text (request-cliki request) (request-stream request)))
 
-(defun cliki-get-handler (request arg-string)
-  (multiple-value-bind (page title) (find-page-or-redirect request)
-    (when (eql page :redirected) (return-from cliki-get-handler))
-    (let ((action (url-query (request-url request))))
-      (cond
-       ((not action)
-	(view-page request page title))
-       ((string-equal action "source")
-        (view-page-source request page title))
-       ((string-equal action "download")
-	(request-redirect
-	 request (merge-url (request-url request)
-			    (caar (page-index page  :download)))))
-       ((string-equal action "edit")
-        (edit-page request page title))
-       ;; can add in other ops like delete etc
-       (t
-        (request-send-error request 500 "Eh?"))))))
-
-(defun cliki-head-handler (request arg-string)
-  (multiple-value-bind (page title) (find-page-or-redirect request)
-    (when (eql page :redirected)
-      ;; no point answering the request, -or-redirect already did
-      (return-from cliki-head-handler))
-    (if page
-      (request-send-headers request :last-modified 
-			    (file-write-date (page-pathname page)))
-      (request-send-headers request :response-code 404
-			    :response-text "Not found"))))
-
-(defun cliki-post-handler (request arg-string)
-  (multiple-value-bind (page title) (find-page-or-redirect request)
-    (when (eql page :redirected) (return-from cliki-post-handler))
-    (save-page request page title)))
-
-(defun cliki-list-all-pages-handler (request arg-string)
+(defun cliki-list-all-pages-handler (request)
   (let* ((pages (loop for p being the hash-values of
 		      (cliki-pages (request-cliki request))
 		      collect p)))
@@ -71,11 +33,23 @@ A.hyperspec { color: #442266 }
 	     pages)))))
      (request-stream request))))
 
-(defun cliki-search-handler (request rest-of-url)
+(defun search-pages (cliki term)
+  (sort (loop for page being the hash-values of (cliki-pages cliki)
+	      for relevance = (apply #'search-term-relevance cliki page term)
+	      if (> relevance 0)
+	      collect (cons page relevance))
+	#'>
+	:key #'cdr))
+
+(defun cliki-search-handler (request)
   (let* ((url (request-url request))
 	 (cliki (request-cliki request))
-	 (words (car (url-query-param url  "words")))
-	 (results (search-for-string cliki (urlstring-unescape words)))
+	 (term (car (url-query-param url  "words")))
+	 (results (search-pages cliki
+				(let ((*read-eval* nil)
+				      (*package* (find-package :keyword)))
+				  (read-from-string
+				   (urlstring-unescape term)))))
 	 (start (parse-integer
 		 (or (car (url-query-param url "start"))
 		     "0") :junk-allowed t))
@@ -84,8 +58,8 @@ A.hyperspec { color: #442266 }
     (request-send-headers request)
     (cliki-page-header cliki request "Search results")
 
-    (format out "<form action=\"~Aadmin/search\"> Search again: <input name=words size=20 value=~S></form>"
-	    (urlstring (cliki-url-root cliki)) words)
+    (format out "<form action=\"~Aadmin/search\"> Search again: <input name=words size=60 value=~S></form>"
+	    (urlstring (cliki-url-root cliki)) term)
     (cond (results
 	   (format out "<table>")
 	   (loop for (name . rel) in (subseq results start end)
@@ -100,18 +74,14 @@ A.hyperspec { color: #442266 }
 	    (request-stream request) start 10 (length results)
 	    (format nil "~A?words=~A&start="
 		    (url-path url)
-		    (urlstring-escape words))))
-	  (t (format out "Sorry, no pages match your search term.  Whack fol o diddle i ay")))))
+		    (urlstring-escape term))))
+	  (t (format out "Sorry, no pages match your search term.  Whack fol o diddle i ay")))
+    t))
 		     
-
-(defun cliki-handler (request exports discriminator arg-string cliki-instance)
-  (declare (ignore exports arg-string))
-  (change-class request 'cliki-request)
-  (setf (request-cliki request) cliki-instance)
-  (dispatch-request request (cliki-handlers cliki-instance) discriminator))
 
 (defvar   *cliki-instance*)
 
+#|
 (defun test ()
   (let ((base-url (parse-urlstring "http://ww.noetbook.telent.net/")))
     (setf *cliki-instance*
@@ -136,3 +106,4 @@ A.hyperspec { color: #442266 }
     (install-serve-event-handlers)))
 
 
+|#
