@@ -67,7 +67,7 @@
                        hour minute
 		       (if title (write-a-href cliki title nil) "?")
                        (car description)
-                       (write-a-href cliki user nil))))
+                       (if user (write-a-href cliki user nil)))))
     (princ "<p>" out)
     (print-page-selector out start number (length changes)
 			 (format nil "~A?start="
