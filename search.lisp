@@ -1,7 +1,41 @@
 (in-package :cliki)
 
-;;; search for stuff.  This is the /(...) searching: the full-text search
-;;; is in index.lisp
+;;; generalised topic searching
+
+(defmethod search-term-relevance ((cliki cliki-instance) page
+				  (term (eql :or)) &rest args)
+  (/ (apply #'+ (mapcar (lambda (x)
+			  (apply #'search-term-relevance cliki page x))
+			args)) 2))
+
+(defmethod search-term-relevance ((cliki cliki-instance) page
+				  (term (eql :not)) &rest args)
+  (- 1 (apply #'search-term-relevance cliki page (car args))))
+
+(defmethod search-term-relevance ((cliki cliki-instance) page
+				  (term (eql :body)) &rest args)
+  (let ((doc-terms (page-tfidf page))
+	(terms (loop for word in (araneida::split (car args))
+		     for stem = (stem-for-word word)
+		     when (interesting-word-p stem)
+		     collect (cons stem 1))))
+    (document-vector-cosine terms doc-terms)))
+
+;;; default method for terms that we probably just want to check the 
+;;; existence of
+(defmethod search-term-relevance ((cliki cliki-instance) page
+				  term &rest args)
+  (loop for n in (cdr (assoc term (page-indices page)))
+	if (string-equal (car n) (car args))
+	maximize (or (cdr n) 1)))
+
+
+
+
+
+
+;;; old search for stuff.  This is the /(...) searching: the full-text
+;;; search is in index.lisp
 
 ;;; XXX this shows all the signs of wanting to be a
 ;;; multiply-dispatched method on (attribute match)
