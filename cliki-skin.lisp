@@ -19,3 +19,4 @@
 (defdelegate defmethod cliki-short-forms ((cliki cliki-skin) ))
 
 
+(defdelegate defmethod save-page ((cliki cliki-skin) request))
