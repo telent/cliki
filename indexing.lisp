@@ -32,8 +32,10 @@
 
           if (member target-page category-links-on-updated-page)
           do (pushnew source-page (page-categories target-page))
-          else do (remove source-page (page-categories target-page))
+          else do (setf (page-categories target-page)
+			(remove source-page (page-categories target-page)))
 
           if (member target-page page-links-on-updated-page)
           do (pushnew source-page (page-backlinks target-page))
-          else do (remove source-page (page-backlinks target-page)))))
+          else do (setf (page-backlinks target-page)
+			(remove source-page (page-backlinks target-page))))))
