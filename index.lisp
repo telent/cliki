@@ -211,7 +211,7 @@
 idf(term) is log(number of documents/number of documents it occurs in)
 
 each document is an n-dimensional vector where each term is a dimension, and
-the size in that dimension is (tf document term) (idf tgerm)
+the size in that dimension is (tf document term) (idf term)
 
 then we turn our search term into a similar vector with 1 on each axis for a
 supplied term
