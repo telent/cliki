@@ -55,9 +55,8 @@ intended for use as a FORMAT Tilde-slash function"
           (add-page-to-category c title)
           (format out "~A &nbsp; "
                   (write-a-href c root nil)))))
-    (format out "<hr><a href=\"~A?edit\">Edit this page</a>
- &nbsp; Last edit: ~A"
-            (urlstring-escape title)
+    (format out "<hr><a href=\"~A?edit\">Edit this page</a> | <a href=\"~A?source\">View page source</a> |  Last edit: ~A"
+            (urlstring-escape title) (urlstring-escape title)
             (araneida::universal-time-to-rfc-date (file-write-date pathname))
             )))
 

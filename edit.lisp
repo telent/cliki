@@ -27,12 +27,15 @@
 
 (defun save-page (request title root)
   (let* ((file (merge-pathnames title root))
+         ;;(ndx-file (merge-pathnames (make-pathname :type "ndx") file))
          (out (request-stream request))
          (view-href (format nil "<a href=\"~A\">~A</a>"
                             (request-path-info request) title)))
     (handler-case 
      (with-open-file (out-file file :direction :output)
        (write-sequence (body-param "text" (request-body request)) out-file))
+     ;;(with-open-file (out-ndx ndx-file :direction :output)
+     ;; (prin1 (index-for (body-param "text" (request-body request))) out-ndx))
      (error (c) (request-send-error 500 "Unable to save file: ~A" c))
      (:no-error (c)
                 (declare (ignorable c))

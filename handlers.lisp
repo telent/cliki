@@ -13,6 +13,8 @@
     (cond
      ((not action)
       (view-page request title root))
+     ((string-equal action "source")
+      (view-page-source request title root))
      ((string-equal action "edit")
       (edit-page request title root))
      ;; can add in other ops like delete etc
