@@ -54,14 +54,14 @@
 	  and old-date = 0 then this-date
           if (and title description user)
           unless (same-day-p this-date old-date)
-          do (with-date this-date nil
+          do (with-date this-date 0
                (format out
                        "</blockquote>
 <a name=~D><h3>~/cliki:dayname/ ~A ~/cliki:monthname/ ~A</h3></a>
 <blockquote>"
                        this-date day-of-week day-of-month month year))
           if (and title description user)
-          do (with-date this-date nil
+          do (with-date this-date 0
 			(format out "<br> ~D:~2,'0D <b>~A</b> : ~A -- ~A ~%"
                        hour minute
 		       (if title (write-a-href cliki title nil) "?")
