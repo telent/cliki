@@ -9,12 +9,6 @@
 			args)) 2))
 
 (defmethod search-term-relevance ((cliki cliki-instance) page
-				  (term (eql :and)) &rest args)
-  (apply #'* (mapcar (lambda (x)
-		       (apply #'search-term-relevance cliki page x))
-		     args)))
-
-(defmethod search-term-relevance ((cliki cliki-instance) page
 				  (term (eql :not)) &rest args)
   (- 1 (apply #'search-term-relevance cliki page (car args))))
 
@@ -27,13 +21,18 @@
 		     collect (cons stem 1))))
     (document-vector-cosine terms doc-terms)))
 
-;;; default method for terms that we probably just want to check the 
-;;; existence of
+;;; default method: for (foo "bar" "baz"), return 1 iff the search
+;;; term is "bar" or "baz"
 (defmethod search-term-relevance ((cliki cliki-instance) page
 				  term &rest args)
-  (loop for n in (cdr (assoc term (page-indices page)))
-	if (string-equal (car n) (car args))
-	maximize (or (cdr n) 1)))
+  (loop for n in (cadr (assoc term (page-indices page)))
+	if (string-equal n (car args))
+	maximize 1)
+  (if
+   (member (car args) (cadr (assoc term (page-indices page)))
+	   :test 'string-equal)
+   1 0))
+  
 
 
 
@@ -98,7 +97,7 @@ CASE-SENSITIVE is (or t nil)"
     ;; display their combined topics lists
     (mapcar #'page-title
 	    (remove-duplicates
-	     (sort 
+ 	     (sort 
 	      (loop for page being the hash-values of (cliki-pages cliki)
 		    if (member term (page-names page) :test pred)
 		    append (page-topics page))
