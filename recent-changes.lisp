@@ -1,14 +1,16 @@
 (in-package :cliki)
 
 (defun restore-recent-changes (cliki &optional max-entries)
-  (with-open-file (in (merge-pathnames "admin/recent-changes.dat"
-				       (cliki-data-directory cliki))
-		      :if-does-not-exist :create
-		      :direction :input)
+  (let ((path (merge-pathnames "admin/recent-changes.dat"
+			       (cliki-data-directory cliki))))
+    (ensure-directories-exist path)
+    (with-open-file (in path
+			:if-does-not-exist :create
+			:direction :input)
       (loop for entry = (read in nil nil)
 	    while (and entry (or (not max-entries) (> max-entries 0)))
 	    if max-entries do (decf max-entries)
-	    do (push entry (cliki-recent-changes cliki)))))
+	    do (push entry (cliki-recent-changes cliki))))))
 
 (defun add-recent-change (cliki date title user &optional description)
   (let* ((entry (list date title user description))
