@@ -21,6 +21,9 @@
   (merge-url (cliki-url-root (page-cliki page))
 	     (urlstring-escape (page-title page))))
 
+(defmethod page-summary ((cliki cliki-instance) (page cliki-page))
+  nil)
+
 (defmethod print-object ((page cliki-page) stream)
   (print-unreadable-object (page stream :type t :identity t)
 			   (princ (page-title page) stream)))
