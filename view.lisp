@@ -49,7 +49,7 @@ intended for use as a FORMAT Tilde-slash function"
                            "Some error occured: <pre>~A</pre>" e)
                    '()))))
       (when categories
-        (format out "<hr><b>Categor~@p:</b> " (length categories))
+        (format out "<hr><b>Topic~p:</b> " (length categories))
         (dolist (c categories)
           (add-page-to-category c title)
           (format out "~A &nbsp; "
