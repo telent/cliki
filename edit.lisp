@@ -93,7 +93,7 @@
 	(format out "Thanks for editing ~A.  You probably need to `reload' or `refresh' to see your changes take effect" view-href)))
     ;; XXX should do aliases here too
     (setf (gethash (canonise-title title) (cliki-pages cliki)) page)
-    (update-indexes-for-page page)
+    (update-page-indices cliki page)
     (update-idf cliki)))
 
 
