@@ -13,21 +13,56 @@ intended for use as a FORMAT Tilde-slash function"
         (tr
          (td ((a :href ,(urlstring home))
               ((img :border 0 :src "/cliki.png" :alt "[ Home ]"))))
-         (td "CLiki pages can be edited by anybody at any time.  Imagine a <i>scarily comprehensive legal disclaimer</i>"))
+         (td "CLiki pages can be edited by anybody at any time.  Imagine a <i>scarily comprehensive legal disclaimer</i>.  Double it.  Add two.  <!-- Now shut your eyes.  Dark, isn't it? -->"))
         (tr ((td :colspan 4) (hr)))))
      stream)))
 
+(defun send-cliki-page-preamble (request title)
+  (let ((out (request-stream request)))
+    (format out "<html><head><title>Cliki : ~A</title></head>
+<link rel=\"stylesheet\" href=\"~Aadmin/cliki.css\">
+<body>
+~/cliki-html:titlebar/
+<h1>~A</h1>~%"
+	    title (urlstring (cliki-request-url-root request))
+	    request title)))
+
+(defun css-file-handler (request rest-of-url)
+  (request-send-headers request :content-type "text/plain")
+  (write-sequence
+   "HTML { font-family: times,serif; } 
+BODY {  background-color: White }
+H1,H2,H3,H4 { font-family: Helvetica,Arial }
+H1 {  color: \"ff0000\" }
+H2 { font-size: 100% }
+DIV { margin-left: 5%; margin-right: 5% }" (request-stream request)))
+
+(defun print-page-selector
+    (stream start-of-page number-on-page total-length urlstring-stub)
+  "Print result page selector with `previous', `next', and numbered links to each result page. Form links by glomming offset to URLSTRING-STUB"
+  (labels ((url (name offset)
+	     (format stream "~&<td><a href=\"~A~A\">~A</a></td>"
+		     urlstring-stub offset name)))
+    (princ "<center><table><tr><td>Result page:  </td><td> </td>" stream)
+    (let ((first-on-screen
+	   (* (floor start-of-page number-on-page) number-on-page)))
+      (if (> first-on-screen 0)
+	  (url "Previous"
+	       (- first-on-screen number-on-page)))
+      (loop for i from 0 to total-length by number-on-page
+	    for j = 1 then (1+ j)
+	    if (<= i start-of-page (+ i number-on-page -1))
+	    do (format stream "~&<td>~A</td>" j)
+	    else do (url j i))
+      (if (< (+ first-on-screen number-on-page) total-length)
+	  (url "Next" (+ first-on-screen number-on-page)))
+      (princ "</tr></table></center>" stream))))
 
 (defun view-page (request title root)
   (let ((out  (request-stream request))
         (pathname (merge-pathnames title root)))
     (request-send-headers request)
-    (format out
-            "<html><head><title>Cliki : ~A</title></head>
-<link rel=\"stylesheet\" href=\"/dan.css\">
-<body>
-~/cliki-html:titlebar/
-<h1>~A</h1>~%" title request title)
+    (send-cliki-page-preamble request title)
     (handler-case
      (with-open-file (in pathname :direction :input)
        (write-stream-to-stream in out)
@@ -57,7 +92,7 @@ intended for use as a FORMAT Tilde-slash function"
         (dolist (c backlinks)
           (format out "~A &nbsp; "
                   (write-a-href c root nil)))))
-    (format out "<hr><form action=\"http://loaclhost.telent.net/cgi-bin/htsearch\"><a href=\"~A?edit\">Edit this page</a> | <a href=\"~A?source\">View page source</a> |  Last edit: ~A | <a href=\"CLiki+Search\" Search CLiki</a> <input name=words size=20></form>"
+    (format out "<hr><form action=\"/cliki/admin/search\"><a href=\"~A?edit\">Edit this page</a> | <a href=\"~A?source\">View page source</a> |  Last edit: ~A | <a href=\"CLiki+Search\"> Search CLiki</a> <input name=words size=20></form>"
             (urlstring-escape title) (urlstring-escape title)
             (araneida::aif (file-write-date pathname)
 			   (date::universal-time-to-rfc-date araneida::it)
