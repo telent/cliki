@@ -1,6 +1,6 @@
 (in-package :cliki)
 
-(defclass cliki-instance (araneida::dispatching-handler)
+(defclass cliki-instance (araneida:dispatching-handler)
   ;; caller should initialize data-directory, title, url-root; the
   ;; rest will be sorted out internally
   ((data-directory :accessor cliki-data-directory :initarg :data-directory)

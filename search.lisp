@@ -37,7 +37,7 @@
 (defmethod search-term-relevance ((cliki cliki-instance) page
 				  (term (eql :body)) &rest args)
   (let ((doc-terms (page-tfidf page))
-	(terms (loop for word in (araneida::split (car args))
+	(terms (loop for word in (araneida:split (car args))
 		     for stem = (stem-for-word word)
 		     when (interesting-word-p stem)
 		     collect (cons stem 1))))
@@ -49,7 +49,7 @@
    (with-output-to-string (o)
      (let* ((e-stream (make-instance 'elided-stream
 				     :important-words
-				     (araneida::split (car args))
+				     (araneida:split (car args))
 				     :output-stream o))
 	    (h-stream (make-instance 'strip-html-stream
 				     :output-stream  e-stream)))

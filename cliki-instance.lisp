@@ -81,7 +81,7 @@ is set by update-page-indices (at startup and after edits).  "
   ))
 
 (defmethod render-html (request
-			(cliki cliki-instance) (handler araneida::handler)
+			(cliki cliki-instance) (handler araneida:handler)
 			html-tree )
   (html-stream (request-stream request) html-tree))
 

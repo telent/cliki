@@ -47,7 +47,7 @@
 		      (setf word-chars nil))
 		     (word-chars
 		      (push c word-chars)))))
-      (dolist (w (araneida::split (page-title page)))
+      (dolist (w (araneida:split (page-title page)))
 	(update :tf  w :weight 6))
       (with-open-file (in-stream (page-pathname page))
 	(scan-stream (cliki-short-forms cliki)
@@ -229,7 +229,7 @@ the docs with closest angle (biggest cos theta)
   (let ((terms (mapcar
 		(lambda (x) (cons (stem-for-word x) 1))
 		(remove-if-not #'interesting-word-p
-			       (araneida::split string)))))
+			       (araneida:split string)))))
     (sort (loop for document being the hash-values of (cliki-pages cliki)
 		for doc-terms = (page-tfidf document)
 		for cos = (document-vector-cosine terms doc-terms)
