@@ -2,10 +2,11 @@
 (in-package :user)
 
 (defsystem cliki
-  :depends-on (ARANEIDA )
+  :depends-on (ARANEIDA xmltools)
   :source-pathname #.(translate-logical-pathname #p"telent:cliki;")
   :components ((:file "defpackage")               
                (:file "indexing" :depends-on ("defpackage"))
+               (:file "link-checker" :depends-on ("indexing"))
                (:file "view" :depends-on ("indexing"))
                (:file "view-source" :depends-on ("defpackage"))
                (:file "edit" :depends-on ("indexing"))
