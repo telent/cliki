@@ -45,6 +45,7 @@
 
 
 (defun export-handlers (base-url directory)
+  (rebuild-categories directory)
   (export-handler base-url (list 'cliki-get-handler directory)
                   :method :get)
   (export-handler base-url (list 'cliki-get-handler directory)
