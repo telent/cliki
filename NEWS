@@ -1,3 +1,19 @@
+
+New in CLiki 0.3.3
+
+* RDF RSS (0.92, insofar as it exists) export for Recent Changes
+
+* Major changes to internal workings of search and indexes such that the
+  index collection is now extensible: index.lisp should be reasonably clear.
+  CLiki 0.4 will happen when some work has been done on the search side of it
+  and some documentation written
+
+* CLiki syntax (_(foo), *(bar) etc) parsing radically changed to help with
+  index chages as above.  
+
+* The latter two should have produced little or no user-visible changes to
+  existing cliki pages
+
 New in CLiki 0.3.2
 
 * New syntax for marking the >(download) URL of a package
