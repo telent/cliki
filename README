@@ -2,25 +2,53 @@
 
 Interactive user-updatable web pages a la wiki (http://www.c2.com/cgi/wiki)
 
-See the live CLiki at http://ww.telent.net/cliki/
+See the live CLikis at http://ww.telent.net/cliki/ and
+http://ww.telent.net/sbcl-internals/
 
-Prerequsite: araneida (http://araneida.telent.net/) and all that that
+* Building it
+
+You need Araneida (http://araneida.telent.net/) and all that that
 implies.
 
-To make it work, 
+Use mk-defsystem with the system definition 
 
-1) build it using the system definition (or the Makefile, which calls
- it)
-2) get an araneida instance going
-3) evaluate something like
+* Using it
 
-  (cliki::export-handlers (merge-url araneida-examples::*static-url* "/cliki/")
-                          *cliki-source-pathname*))
+You need to create a cliki-instance object and install cliki-handler
+somewhere in your URL hierarchy.  For example
 
-where *cliki-source-pathname* is the writable directory where you want
-the data stored
+(defvar *cliki-instance* nil)
+(setf *cliki-instance*
+      (make-instance 'cliki::cliki-instance
+                     :data-directory "/var/www/cliki/"
+                     :url-root (merge-url ww-url "/cliki/")))
+(export-handler (merge-url ww-url "/cliki/")
+                `(cliki::cliki-handler ,*cliki-instance*)
+                :needs-discriminator t)))
 
-4) there you go.  Enjoy.  Post a note on http://ww.telent.net/cliki/CLiki
-to let people know how you got on
+Note that data-directory must be writable by the user who is running
+the CL instance
+
+If you would like to run multiple CLikis on the same server, you can
+do that with multiple cliki-instances.  If you want them to have
+different look and feel, you can create a subclass of cliki-instance
+and specialize 
+
+(defmethod cliki:cliki-css-text ((cliki your-cliki-instance) stream)
+ ...)
+
+and 
+
+(defmethod cliki:cliki-page-header
+    ((cliki your-cliki-instance) request title &optional head)
+ ...)
+
+
+The customizability was added in the space of about two hours on one
+Sunday evening, and designed on the premise that it served my
+immediate need.  If it doesn't serve yours, I'm open to patches.
+
+
+
 
 
