@@ -41,35 +41,33 @@
   (find title *recent-changes-list* :key #'second :test #'equal))
 
 (defun same-day-p (date1 date2)
-  (let ((start-of-date1
-         (with-date date1 nil
-	     (encode-universal-time 0 0 0 day-of-month month year))))
-    (<= start-of-date1 date2 (+ start-of-date1 86400))))
+  (and date1 date2 
+       (let ((start-of-date1
+	      (with-date date1 nil
+		(encode-universal-time 0 0 0 day-of-month month year))))
+	 (<= start-of-date1 date2 (+ start-of-date1 86400)))))
 
-(defun view-recent-changes (request title root)
+(defun view-recent-changes (request rest-of-url)
+  (declare (ignore rest-of-url))
   (let ((out  (request-stream request))
+	(root (cliki-request-data-directory request))
         (start
-         (or (parse-integer
-              (or (url-query-param (request-url request) "start") "")
-              :junk-allowed t) 0))
-        (number
-         (or (parse-integer
-              (or (url-query-param (request-url request) "number") "")
-              :junk-allowed t) 30)))
+         (parse-integer
+	  (or (car (url-query-param (request-url request) "start")) "0")
+	  :junk-allowed t))
+        (number 30))
     (request-send-headers request)
-    (format out
-            "<html><head><title>Cliki : Recent Changes</title></head>
-<link rel=\"stylesheet\" href=\"admin/cliki.css\">
-<body>
-~/cliki-html:titlebar/
-<h1>Recent Changes</h1>~%<blockquote>This page is now updated automatically.  Look out for RSS exports in the near future too. -- ~A"
-            request
-            (write-a-href "Daniel Barlow" root nil))
+    (send-cliki-page-preamble request "Recent Changes")
+    (if (= start 0)
+	(format out
+		"<blockquote>This page is now updated automatically.  Look out for RSS exports in the near future too. -- ~A"
+		(write-a-href "Daniel Barlow" root nil))
+	(format out "<p>Older entries (starting at ~D)</p>~%" start))
     (loop for (this-date title user . description)
              in (subseq *recent-changes-list* start
                         (min (+ start number) (length *recent-changes-list*)))
           and old-date = 0 then this-date
-          if description
+          if (and title description user)
           unless (same-day-p this-date old-date)
           do (with-date this-date nil
                (format out
@@ -77,11 +75,16 @@
 <a name=~D><h3>~/cliki:dayname/ ~A ~/cliki:monthname/ ~A</h3></a>
 <blockquote>"
                        this-date day-of-week day-of-month month year))
+          if (and title description user)
           do (with-date this-date nil
                (format out "<br> ~D:~2,'0D <b>~A</b> : ~A -- ~A ~%"
-                       hour minute (write-a-href title root nil)
+                       hour minute
+		       (if title (write-a-href title root nil) "?")
                        (car description)
                        (write-a-href user root nil))))
-    ;;; should add links to older/newer changes
+    (princ "<p>" out)
+    (print-page-selector out start number (length *recent-changes-list*)
+			 (format nil "~A?start="
+				 (url-path (request-url request))))
     ))
 
