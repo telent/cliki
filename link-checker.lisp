@@ -2,7 +2,19 @@
 
 ;;; CLiki external link checker
 
-(alien:def-alien-routine alarm c-call:void (seconds alien:integer :in))
+#+cmu
+(progn
+  (alien:def-alien-routine alarm c-call:void (seconds alien:integer :in))
+  (defmacro with-enabled-interrupts (&rest args)
+    `(system:with-enabled-interrupts ,@args)))
+
+#+sbcl
+(progn
+  (sb-alien:def-alien-routine alarm sb-c-call:void
+			      (seconds sb-alien:integer :in))
+  (defmacro with-enabled-interrupts (&rest args)
+    `(sb-sys:with-enabled-interrupts ,@args)))
+
 
 ;;; It's network code, so there's a billion ways it could go wrong.
 ;;; For the record:
@@ -31,7 +43,7 @@
                   (member port '(80 81 8080 8000 8001)))
        (return-from get-http-response t))
      (let ((s (make-inet-socket :stream :tcp)))
-       (system:with-enabled-interrupts
+       (with-enabled-interrupts
         ((14 (lambda (a b c) (sockets::socket-error "alarm timed out"))))
         (unwind-protect
             (progn
