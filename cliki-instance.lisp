@@ -48,6 +48,34 @@ is set by update-page-indices (at startup and after edits).  "
 	      (let ((x (gethash term idf)))
 		(setf (gethash term idf) (1+ (or x 0)))))))
     (setf (slot-value cliki 'idf) idf)))
+  
+
+(defmethod cliki-load-page ((cliki cliki-instance) pathname)
+  (let* ((titles-f (merge-pathnames (make-pathname :type "titles") pathname))
+	 (titles (with-open-file (i titles-f :direction :input) (read i)))
+	 (meta (merge-pathnames (make-pathname :type "index") pathname))
+	 (versions
+	  (sort 
+	   (remove-if #'zerop
+		      (mapcar 
+		       (lambda (x) 
+			 (or (parse-integer (or (pathname-type x) "")
+					    :junk-allowed t) 0))
+		       (directory
+			(make-pathname :type :wild :defaults pathname))))
+	   #'>))
+	 (page (make-instance 'cliki-page :title (car titles)
+			      :names titles
+			      :versions (or versions (list 0))
+			      :pathname pathname
+			      :cliki cliki)))
+    (dolist (title titles)
+      (setf (gethash (canonise-title title) (cliki-pages cliki)) page))
+    (cond ((probe-file meta)
+	   ; ... do stuff to reload the index data
+	   )
+	  (t (update-page-indices cliki page)))
+    page))
 
 (defmethod shared-initialize
     :after ((cliki cliki-instance) slot-names &rest initargs)
@@ -58,25 +86,11 @@ is set by update-page-indices (at startup and after edits).  "
 		(directory
 		 (merge-pathnames "*.titles"
 				  (cliki-data-directory cliki))))))
-    (dolist (f files) ;(subseq files 0 14))
-      (let* ((titles (with-open-file (i f :direction :input) (read i)))
-	     (*default-pathname-defaults* (cliki-data-directory cliki))
-	     (p (make-instance 'cliki-page
-			       :title (car titles)
-			       :names titles
-			       ;; f is foo.titles: lose pathname-type
-			       :pathname 
-			       (merge-pathnames (make-pathname
-						 :name (pathname-name f)))
-			       :cliki cliki)))
-	(dolist (title titles)
-	  (setf (gethash (canonise-title title) (cliki-pages cliki))
-		p))))
-    (loop for page being the hash-values of (cliki-pages cliki)
-	  do
-	  (progn
-	    (format t "Indexing page ~D~%" page)
-	    (update-page-indices cliki page)))
+    (let ((*default-pathname-defaults* (cliki-data-directory cliki)))
+      (dolist (f files) 
+	(cliki-load-page
+	 cliki (merge-pathnames (make-pathname :name (pathname-name f))))
+	(format t "Loaded page ~A~%" f)))
     (update-idf cliki)
     (restore-recent-changes cliki)))
 
@@ -106,12 +120,6 @@ is set by update-page-indices (at startup and after edits).  "
   (install-handler cliki `(view-recent-changes) "Recent+Changes" nil))
   
 
-#+nil
-(defmethod render-html (request
-			(cliki cliki-instance) (handler araneida:handler)
-			html-tree )
-  (html-stream (request-stream request) html-tree))
-
 ;; XXX is this reasonable?  I don't think so, really
 (defmethod handle-request-authentication ((handler cliki-view)
 					  method request)
@@ -125,7 +133,17 @@ is set by update-page-indices (at startup and after edits).  "
 		   (t (find-handler (cdr handlers))))))
     (find-handler (request-handled-by request))))
 		    
-
+(defmethod handle-request :around ((handler cliki-view) request)
+  (handler-case 
+      (call-next-method)
+    (http-error (c)
+      (request-send-headers request
+			    :response-code (http-error-code c)
+			    :response-text (http-error-message c) )
+      (with-page-surround (handler request (symbol-name (type-of c)))
+	(format cliki::out "~A" (http-error-client-message c)))
+      (signal 'response-sent))))
+			    
 (defmethod handle-request-response ((handler cliki-view)
 				    (method (eql :head))
 				    request )
@@ -145,18 +163,21 @@ is set by update-page-indices (at startup and after edits).  "
   (or
    (call-next-method)
    (multiple-value-bind (page title) (find-page-or-redirect handler request)
-     (let ((action (url-query (request-url request))))
+     (let* ((u (request-url request))
+	    (version (integer-for (car (url-query-param u "v"))
+				  :default :newest)))
        (cond
-	 ((not action)
-	  (view-page handler request page title))
-	 ((string-equal action "source")
-	  (view-page-source request page title))
-	 ((string-equal action "download")
+	 ((url-query-param u "source")
+	  (view-page-source request page title :version version))
+	 ((url-query-param u "download")
 	  (let ((d (and page (page-index page :package))))
 	    (when d
 	      (request-redirect
-	       request (merge-url (parse-urlstring "http://ww.telent.net/cclan/")
-				  (caar d)))
+	       request
+	       (merge-url (parse-urlstring "http://ww.telent.net/cclan/")
+			  (caar d)))
 	      t)))
 	 (t
-	  (request-send-error request 500 "Eh?")))))))
+	  (view-page handler request page title :version version)))))))
+
+
