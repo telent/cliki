@@ -17,16 +17,29 @@ intended for use as a FORMAT Tilde-slash function"
       (tr ((td :colspan 4) (hr)))))
    stream)))
 
-;;; this is ugly.  It's  a cheap (in programmer-time terms, anyway) hack
-;;; for CMUCL's lack of EQUAL hash tables
-(defvar *pages-for-category* (make-hash-table))
-(defun add-page-to-category (category title)
-  (let ((sym (intern category :cliki-pages)))
-    (pushnew title (gethash sym *pages-for-category*) :test #'string=)))
-(defun pages-for-category (category)
-  (let ((sym (intern category :cliki-pages)))
-    (gethash sym *pages-for-category*)))
+(defvar *categories* '())
+(defun rebuild-categories (directory)
+  (setf *categories* (list))
+  (with-open-file (o #p"/dev/null" :direction :output)
+    (dolist (f (directory directory))
+      (read-categories-from-file f o))))
 
+(defun read-categories-from-file (f o)
+  (with-open-file (i f :direction :input)
+    (let ((categories (ignore-errors (write-stream-to-stream i o))))
+      (dolist (c categories)
+        (add-page-to-category c (pathname-name f))))))
+
+(defun add-page-to-category (category title)
+  (let ((c (assoc category *categories* :test #'string=)))
+    (if c
+        (setf (cdr c) (adjoin title (cdr c) :test #'string=))
+      (setf *categories* (acons category (list title) *categories*)))))
+
+(defun pages-for-category (category)
+  (copy-list (cdr (assoc category *categories* :test #'string=))))
+
+;; also need function to delete page from all categories
              
 (defun view-page (request title root)
   (let ((out  (request-stream request))
@@ -57,7 +70,9 @@ intended for use as a FORMAT Tilde-slash function"
                   (write-a-href c root nil)))))
     (format out "<hr><a href=\"~A?edit\">Edit this page</a> | <a href=\"~A?source\">View page source</a> |  Last edit: ~A"
             (urlstring-escape title) (urlstring-escape title)
-            (araneida::universal-time-to-rfc-date (file-write-date pathname))
+            (araneida::aif (file-write-date pathname)
+                 (araneida::universal-time-to-rfc-date araneida::it)
+                 "(none)")
             )))
 
 (defun directory-for (pathname)
