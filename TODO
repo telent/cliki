@@ -11,3 +11,25 @@ use net.telent.date
 
 Let's punt on aliases for the moment.  eventually we need to be able
 to edit a page's aliases: another box on the edit page?
+
+create-indexes greps all pages for _, >, * links, also populates
+page-tf slot
+
+read-word needs attention to deal properly with cliki markup.  If it
+did this, it could also be told how to arrange the indices for special
+words, and that would let us deal with topics, downloads, etc.  Well, nearly
+
+Ordinary words are a SMO of ( word -> # occurences )
+
+"reported-date" tag is, say, is :(reported-date "2002/12/5")
+
+
+You know, really, they're not all that similar after all
+
+We'd like to be able to search, say
+
+ (> fixed-in
+ "sbcl" "2002/1/1")
+
+
+

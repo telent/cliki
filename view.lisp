@@ -11,6 +11,12 @@
 	      `(html
 		(head (title ,(format nil "CLiki : ~A" title))
 		 ,@head
+		 ((link :rel "alternate"
+			:type "application/rss+xml"
+			:title "Recent Changes"
+			:href
+			,(urlstring (merge-url (cliki-url-root cliki)
+					       "recent-changes.rdf"))))
 		 ((link :rel "stylesheet" :href
 			,(urlstring (merge-url (cliki-url-root cliki)
 					       "admin/cliki.css")))))

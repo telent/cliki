@@ -65,6 +65,8 @@
 		    `(view-recent-changes) :stage handlers)
     (export-handler (merge-url base-url "recent-changes.rdf")
 		    `(rdf-recent-changes) :stage handlers)
+    (export-handler (merge-url base-url "recent-changes.sexp")
+		    `(sexp-recent-changes) :stage handlers)
     (export-handler (merge-url base-url "Recent+Changes")
 		    `(view-recent-changes) :stage handlers)
     (setf (cliki-handlers cliki) handlers)))

@@ -124,3 +124,13 @@
 </rss>"
 	    (cliki-title cliki)
 	    (urlstring (cliki-url-root cliki)))))
+
+(defun sexp-recent-changes (request rest-of-url)
+  (declare (ignore rest-of-url))
+  (let* ((out  (request-stream request))
+	 (cliki (request-cliki request))
+	 (changes (cliki-recent-changes cliki)))
+    (request-send-headers request :content-type "text/plain")
+    (print (subseq changes 0 200) out)))
+
+

@@ -68,7 +68,7 @@
 	   (push (cons k v) ret))))
     ret))
 
-;;; if we kept out document vectors as _real_ vectors they'd probably
+;;; if we kept our document vectors as _real_ vectors they'd probably
 ;;; be incredibly sparse for the most part.  So we have lists of
 ;;; ((term . freq) (term . freq) ...)
 
