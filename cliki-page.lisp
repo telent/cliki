@@ -43,7 +43,8 @@
     (handler-case
 	(loop
 	 (catch 'matched
-	   (dolist (i (find-token chars stream dispatch)) (funcall output i))))
+	   (dolist (i (find-token chars stream dispatch))
+	     (funcall output i))))
       (end-of-file (c) (declare (ignore c)) nil))))))))
 
 

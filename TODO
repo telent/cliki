@@ -12,6 +12,6 @@ use net.telent.date
 Let's punt on aliases for the moment.  eventually we need to be able
 to edit a page's aliases: another box on the edit page?
 
-new long-form options: need a single place to convert short-form 
-options to long-form
+Searches (/ syntax) are borken
 
+Test asd dependcencies
