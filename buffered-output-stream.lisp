@@ -46,7 +46,8 @@
     (loop for i from start below end
 	  do (vector-push-extend (elt string i) buffer extend-by))
     (when (> (length buffer) (buffered-output-stream-write-threshold stream))
-      (buffered-output-stream-write-some stream))))
+      (buffered-output-stream-write-some stream)))
+  string)
 
 (defmethod stream-write-char ((stream buffered-output-stream) character)
   (let ((buffer (buffered-output-stream-buffer stream)))
@@ -54,7 +55,8 @@
 			(buffered-output-stream-extend-by stream))
     (when (> (length buffer)
 	     (buffered-output-stream-temporary-write-threshold stream))
-      (buffered-output-stream-write-some stream))))
+      (buffered-output-stream-write-some stream)))
+  character)
 
 ;;; subclasses should probably avoid specialising these two methods
 (defmethod stream-finish-output ((stream buffered-output-stream))
