@@ -1,3 +1,12 @@
+New in CLiki 0.3.2
+
+* New syntax for marking the >(download) URL of a package
+
+* Uses new Araneida cookie accessors (so yes, you need a new Araneida as well)
+
+* Default CLHS URL changed to lisp.org, as they still have the old Hyperspec
+  page names.  This is a stopgap measure, really
+
 New in CLiki 0.3.1
 
 * Nothing much.  Now builds using asdf
