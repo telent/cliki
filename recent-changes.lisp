@@ -46,8 +46,9 @@
     (cliki-page-header cliki request "Recent Changes")
     (if (= start 0)
 	(format out
-		"<blockquote>This page is updated automatically.  There's also an RDF RSS feed at <a href=\"recent-changes.rdf\">~A</a>~A"
-		(merge-url (request-url request  "recen
+		"<blockquote>This page is updated automatically.  There's also an RDF RSS feed at <a href=\"recent-changes.rdf\">~A</a> -- ~A"
+		(urlstring
+		 (merge-url (request-url request) "recent-changes.rdf"))
 		(write-a-href cliki "Daniel Barlow" nil))
 	(format out "<p>Older entries (starting at ~D)</p>~%" start))
     (loop for (this-date title user . description)
