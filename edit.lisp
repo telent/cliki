@@ -44,5 +44,40 @@
                 (format out "Thanks for editing ~A.  Don't forget to update the <a href=\"Recent+Changes\">Recent Changes</a> page to describe what you did.  Oh, and you probably need to `reload' or `refresh' to see your changes take effect" view-href)))
     (update-indexes-for-page title root)))
 
+;;; This is fairly intolerant about the format of the file it reads.
+(defun update-recent-changes (title root)
+  (let* ((pathname (merge-pathnames "Recent Changes" root))
+         (now-decoded (multiple-value-list (get-decoded-time)))
+         (this-morning (encode-universal-time 0 0 0
+                                              (elt now-decoded 3)
+                                              (elt now-decoded 4)
+                                              (elt now-decoded 5)
+                                              (elt now-decoded 6)))
+         (document
+          (with-open-file (in pathname :direction :input)
+            (copy-tree (net.html.parser:parse-html in))))
+         (last-change (ext:parse-time
+                       (second
+                        (find-if (lambda (x) (and (consp x) (eql (car x) :h3)))
+                                 document)))))
+    (unless (>= last-change this-morning)
+      (setf document
+            `(,(car document)
+              (:h3 ,(with-date this-morning
+                      (format nil "~/cliki:dayname/, ~A ~/cliki:monthname/ ~A"
+                              day date month year)))
+              #.(format nil "~%")
+              (:ul)
+              #.(format nil "~%")
+              ,@(cdr document))))
+    (let ((ul (find-if (lambda (x) (and (consp x) (eql (car x) :ul))) document)))
+      (setf (cdr ul)
+            (cons (list :li (format nil "_(~A): something changed" title))
+                  (cdr ul))))
+    
+    (with-open-file (out pathname :direction :output)
+      (dolist (tree document)
+        (araneida::html-stream out tree net.html.parser::*in-line*)))))
 
+                           
 
