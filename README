@@ -7,8 +7,11 @@ http://ww.telent.net/sbcl-internals/
 
 * Building it
 
-You need Araneida (http://araneida.telent.net/) and all that that
-implies.
+You need 
+
+ - Araneida (http://araneida.telent.net/) and all that that implies.
+
+ - ASDF (http://ww.telent.net/cliki/asdf)
 
 Use asdf with the system definition 
 
