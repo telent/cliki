@@ -109,7 +109,7 @@ intended for use as a FORMAT Tilde-slash function"
         (write-sequence
          (html
           `(ul
-            ,@(mapcar (lambda (x) `(li ((a :class "internal"
+            ,@(mapcar (lambda (x) `(li ((a :class "\"internal\""
                                            :href ,(urlstring-escape x)) ,x)))
                       titles)))
          stream)))))
