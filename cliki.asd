@@ -17,7 +17,9 @@
 	       (:file "edit-handler" :depends-on ("cliki-request-class"
 						  "cliki-page-class"
 						  "edit-handler-class"))
-
+	       (:file "authed-cliki-class" :depends-on ("cliki-instance"
+							"edit-handler"))
+	       (:file "authed-cliki" :depends-on ("authed-cliki-class"))
 	       (:file "index"
 		      :depends-on ("cliki-page" "cliki-instance"
 						"cliki-request"))
