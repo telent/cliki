@@ -54,7 +54,7 @@
 
 
 (defun export-handlers (base-url directory)
-  (rebuild-categories directory)
+  (create-indexes directory)
   (export-handler base-url (list 'cliki-get-handler directory)
                   :method :get)
   (export-handler base-url (list 'cliki-head-handler directory)
@@ -65,3 +65,4 @@
                   (list 'cliki-list-all-pages-handler base-url directory))
   (export-handler base-url (lambda (r rest) (request-redirect r "index"))
                   :method :get :match :exact))
+
