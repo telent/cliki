@@ -2,12 +2,12 @@
 (in-package :cl-user)
 
 (make:defsystem cliki
-  :depends-on (ARANEIDA xmltools net-telent-date)
+  :depends-on (ARANEIDA #+nil xmltools net-telent-date)
   :source-pathname #p"telent:cliki;"
   :components ((:file "defpackage")               
                (:file "indexing" :depends-on ("defpackage"))
                ;(:file "date" :depends-on ("defpackage"))
-               (:file "link-checker" :depends-on ("indexing"))
+               ;(:file "link-checker" :depends-on ("indexing"))
                (:file "view" :depends-on ("indexing"))
                (:file "recent-changes" :depends-on ("defpackage" ))
                (:file "view-source" :depends-on ("defpackage"))
