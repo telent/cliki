@@ -4,7 +4,7 @@
 
 (defun edit-page (request page title)
   (let* ((out (request-stream request))
-	 (cookie (car (request-header request :cookie)))
+	 (cookie (request-cookie request "username"))
 	 (username (and cookie
 			(let ((p (position #\= cookie)))
 			  (and p
