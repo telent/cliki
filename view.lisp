@@ -234,6 +234,17 @@
   (destructuring-bind (name &key (from :unknown) &allow-other-keys) args
     (html-for-download-link cliki stream from name)))
 
+(defmethod html-for-keyword ((cliki cliki-instance) stream
+			     (keyword (eql :package))
+			     &rest args)
+  (let ((merged
+	 (urlstring (merge-url (parse-urlstring "http://ww.telent.net/cclan/")
+			       (car args)))))
+    (format stream
+	    "<a class=\"download\" href=\"~A\"
+><b>Download ASDF package from ~A</b></a>"
+	    merged merged )))
+
 
 
 (defun legacy-search-result (cliki string stream)
@@ -288,8 +299,5 @@ this is left in the output but not counted by the bracket matcher"
          (if (eql nesting 0) (return out))
          )))))
 
-(rt:deftest read-matched-parens
-            (with-input-from-string (i "(foo(bar(bax)bo\\)ol))fluff")
-                                    (read-matched-parens i))
-            "(foo(bar(bax)bo\\)ol))")
+
 
