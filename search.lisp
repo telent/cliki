@@ -56,9 +56,8 @@ CASE-SENSITIVE is (or t nil)"
   (declare (ignorable term pathname match case-sensitive))
   (search-error "Full body searching not yet implemented.  Sorry."))
 
-
 (defun search-page-topics (term pathname match case-sensitive)
-  (declare (ignorable term pathname match case-sensitive))
+  (declare (ignorable pathname match case-sensitive))
   (pages-for-category term))
 
      
