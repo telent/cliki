@@ -36,7 +36,8 @@ H1,H2,H3,H4 { font-family: Helvetica,Arial }
 H1 {  color: DarkGreen }
 H2 { font-size: 100% }
 DIV { margin-left: 5%; margin-right: 5% }
-A.internal { color: \"0077bb\" }
+A.internal { color: #0077bb }
+A.hyperspec { color: #442266 }
 " (request-stream request)))
 
 (defun print-page-selector
@@ -132,7 +133,15 @@ A.internal { color: \"0077bb\" }
        ((and (member c '(#\* #\_)) (eql c1 #\())  ; link
         (write-a-href
          (strip-outer-parens (read-matched-parens in-stream))
-         (directory-for in-stream) out-stream))              
+         (directory-for in-stream) out-stream))
+       ((and (eql c #\#) (eql (char-upcase c1) #\H))
+        (read-char in-stream)
+        (let* ((term (strip-outer-parens (read-matched-parens in-stream)))
+               (url (hyperspec-url term)))
+          (if url
+              (format out-stream "<a class=\"hyperspec\" href = \"~a\">~a</a>" url 
+		      term)
+              (write-string out-stream term))))
        (t (write-char c out-stream)) ))))
        
 
@@ -146,7 +155,7 @@ A.internal { color: \"0077bb\" }
         (write-sequence
          (html
           `(ul
-            ,@(mapcar (lambda (x) `(li ((a :class "\"internal\""
+            ,@(mapcar (lambda (x) `(li ((a :class "internal"
                                            :href ,(urlstring-escape x)) ,x)))
                       titles)))
          stream)))))
