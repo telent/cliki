@@ -134,7 +134,13 @@ Describe _(~A) here
 				 :cliki cliki)))
 	     (old-filename (merge-pathnames (page-pathname page)))
 	     (body (request-body request))
+	     (username (cliki-user-name
+			cliki (or (request-user request)
+				  (body-param "name" body))))
 	     (title-filename (title-file filename)))
+	(when (string= username "A N Other")
+	  (request-send-error request 403 "Anonymous posting is disabled: please use a real name (yours, for preference)")
+	  (return-from save-page nil))
 	(save-stream cliki request filename)
 	(with-open-file (out-file title-filename :direction :output)
 	  (with-standard-io-syntax
@@ -152,9 +158,7 @@ Describe _(~A) here
 		(format *terminal-io* "Deleting ~S ~%" f)
 		(delete-file f))) ))
 	(add-recent-change cliki (get-universal-time) title
-			   (cliki-user-name
-			    cliki (or (request-user request)
-				      (body-param "name" body)))
+			   username
 			   (body-param "summary" body))
 	(setf (gethash (canonise-title title) (cliki-pages cliki)) page)
 	(update-page-indices cliki page)
