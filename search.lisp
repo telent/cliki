@@ -58,6 +58,7 @@ CASE-SENSITIVE is (or t nil)"
 
 (defun search-page-topics (term pathname match case-sensitive)
   (declare (ignorable pathname match case-sensitive))
-  (pages-for-category term))
+  (copy-list (gethash (intern term #.*package*) *categories*))
+  #+nil (pages-for-category term))
 
      
