@@ -31,12 +31,10 @@
 ;;; term is "bar" or "baz"
 (defmethod search-term-relevance ((cliki cliki-instance) page
 				  term &rest args)
-  (loop for n in (cadr (assoc term (page-indices page)))
-	if (string-equal n (car args))
-	maximize 1)
   (if
    (member (car args) (cadr (assoc term (page-indices page)))
-	   :test 'string-equal)
+	   :test (lambda (x y)
+		   (string-equal (princ-to-string x) (princ-to-string y))))
    1 0))
   
 
