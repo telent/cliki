@@ -5,7 +5,8 @@
                     (string-equal (substitute #\_ #\Space a)
                                   (substitute #\_ #\Space b))))
     (let* ((candidates (mapcar #'pathname-name (directory root))))
-      (find title candidates :test #'match-p))))
+      (or (find title candidates :test #'match-p)
+          title))))
 
 (defun request-title (request root)
   (let* ((string (urlstring-unescape (request-path-info request)))
