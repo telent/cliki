@@ -222,8 +222,9 @@
          (form (read-from-string (format nil "( ~A )" string) nil nil)))
     (destructuring-bind (term &key attribute match case-sensitive) form
       (let ((titles
-             (search-pages cliki term :attribute attribute :match match  
-                           :case-sensitive case-sensitive)))
+             (legacy-search-pages
+	      cliki term :attribute attribute
+	      :match match :case-sensitive case-sensitive)))
 	(princ
 	 (html
 	  `(ul
