@@ -22,10 +22,8 @@
       (request-send-error request 500 "Eh?")))))
 
 (defun cliki-head-handler (request arg-string root)
-  (let* ((action (url-query (request-url request)))
-         (title (request-title request))
+  (let* ((title (request-title request))
          (file (merge-pathnames title root))
-         (out (request-stream request))
          (date (file-write-date file)))
     (if date
         (request-send-headers request :last-modified date)
