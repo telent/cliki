@@ -24,12 +24,15 @@
 	stop)))
 
 (defun find-elision-boundary-forward (buffer index max)
-  (let* ((end (length buffer))
-	 (para (or (position #\Newline buffer :start index :end (+ index max)) end))
-	 (sentence (or (position #\. buffer :start index :end (+ index max)) end))
-	 (stop (min (+ index max) para sentence)))
+  (let* ((max (if (> (+ index max) (length buffer))
+		  (- (length buffer) index)
+		  max))
+	 (end (+ index max))
+	 (para (or (position #\Newline buffer :start index :end end) end))
+	 (sentence (or (position #\. buffer :start index :end end) end))
+	 (stop (min end para sentence)))
     (or (position-if-not #'word-char-p
-			 buffer :start index :end (1+ stop) :from-end t)
+			 buffer :start index :end  stop :from-end t)
 	stop)))
 
 (defmethod elided-stream-highlight-words ((stream elided-stream) start-index end-index words-start)
@@ -81,6 +84,8 @@
 	 (start-index 0)
 	 interesting-indices iword next-iword)
     (labels ((find-interesting-word (start)
+	       (unless (< start (length b))
+		 (return-from find-interesting-word nil))
 	       (loop for w in words
 		     for p = (search-word w b start)
 		     when p minimize p into min
