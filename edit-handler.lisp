@@ -138,6 +138,7 @@ Describe _(~A) here
 			cliki (or (request-user request)
 				  (body-param "name" body))))
 	     (title-filename (title-file filename)))
+	#+nil
 	(when (string= username "A N Other")
 	  (request-send-error request 403 "Anonymous posting is disabled: please use a real name (yours, for preference)")
 	  (return-from save-page nil))

@@ -1,14 +1,20 @@
 								-*- Text -*-
 New in CLiki 0.4.2
 
-* Now depends on xmls package for rss generation (oh, stop whinging.
-  It's only small, it's asdf-installable if you ignore the lack of
-  GPG key, and it decruftifies the code noticeable)
+* Now depends on xmls package for rss generation (stop complaining at
+  the back there: it's small, it's asdf-installable if you ignore the
+  lack of GPG key, and it decruftifies the code noticeably)
+
+* Tweaked the feature that allows users to collapse multiple edits to
+  the same page such that they only show on Recent Changes once.  Now
+  it only works if the two edits happened within ten minutes of each
+  other.
 
 * Update README to include web address for lispweb list
 
-* 'Create new page' link to site root fixed (pointed out by Erik Enge,
-  patch from Ivan Toshkov, thanks both)
+* 'Create new page' link to site root, and other links in the default
+  HTML stuff fixed (pointed out by Erik Enge, patch from Ivan Toshkov,
+  thanks both)
 
 * example.lisp package name changed to something less clashable
 
