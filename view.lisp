@@ -162,9 +162,12 @@
 	      "This page doesn't exist yet.  Please create it if you want to")))
 
 (defun view-page (cliki request page title &key (version :newest))
-  (let ((lmtime (if page (page-last-modified page) (get-universal-time))))
+  (let ((lmtime (if page (page-last-modified page) (get-universal-time)))
+	(google (and page (googlable-p page version))))
     (request-send-headers request :conditional t :last-modified lmtime)
-    (with-page-surround (cliki request title)
+    (with-page-surround (cliki request title
+			       (unless google 
+				 '(((META :NAME "ROBOTS" :CONTENT "NOFOLLOW")))))
       (if page
 	  (progn
 	    (let* ((topics 
