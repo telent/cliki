@@ -1,7 +1,7 @@
-(in-package :user)
+(in-package :cl-user)
 (defpackage "CLIKI"
   (:export cliki-view-handler cliki-edit-handler)
-  (:use "MAKE" "COMMON-LISP" "ARANEIDA" "SOCKETS"))
+  (:use "MAKE" "NET.TELENT.DATE" "COMMON-LISP" "ARANEIDA" "SOCKETS"))
 
 ;;; language for inline searches and stuff
 (defpackage "CLIKI-PAGES" (:use #| nil |# ))
