@@ -12,4 +12,56 @@ use net.telent.date
 We need to be able to edit a page's aliases, which involves UI design
 of some kind.  Another box on the edit page?
 
-Test asd dependencies
+search syntax for the cmucl/sbcl bug db
+
+access control
+
+
+* CLiki
+** funny chars in page names 
+** topic synonyms, UI for
+** read-only/authenticated version
+  - produce cookie based on username and some kind of secret
+
+  need to continue to support the crrent workflow too, btw
+
+  - check cookie in authentication handler
+  - add some kind of acl to each page, inheriting sensibly from, um,
+     some other page (what other page?)
+  - access rights are :view, :edit, :comment  (append-only)
+
+for non-trivial authiz handlers we need UI changes to get the details
+when an unauthenticated request comes in: don't want to let people do
+their edits _before_ telling them they don't have the rights to save.
+
+so, authentication and authorization handlers on the edit-handler.
+But we don't bother authenticating if the page access perms say that 
+anybody may edit
+
+groups:
+- anonymous user
+- any named user
+- a user
+- recursively, a list of groups
+
+somewhere we need to store the edit permissions per-page.
+persistently, yes.  I guess we could put them in the .titles files.
+we also need to store the user group data 
+
+somehow we need a policy for edit perms on new pages
+
+ideally also we need a UI for changing it.  and titles.  
+
+
+
+** Can we use cliki as a photo manager?
+
+- "photo" pages: one picture and some text
+- "collection" pages: text and many half-sized photos being links to 
+  the relevant photo pages
+- some convenience for page naming when uploading a whole collection
+- convenient internal anchor syntax for collection pages (then it
+  could be used as a diary): should also accept a human-readable title
+  so that collections can have associated rdf files
+
+
