@@ -1,17 +1,141 @@
 (in-package :cliki)
 
 (defmethod cliki-css-text ((cliki cliki-instance) stream)
-  (write-sequence
-   "HTML { font-family: times,serif; } 
-BODY {  background-color: White }
-H1,H2,H3,H4 { font-family: Helvetica,Arial }
-H1 {  color: DarkGreen }
-H2 { font-size: 100% }
-DIV { margin-left: 5%; margin-right: 5% }
-A.internal { color: #0077bb }
-A.hyperspec { color: #442266 }
-" stream))
+  (write-sequence "
+/*
+ * cliki.css
+ * toplevel cliki style sheet
+ */
 
+/*
+ * general styles
+ */
+body 
+{  
+  background: white;
+  color: black;
+  font-family: serif;
+  font-size: 13px;
+  margin: 0; padding: 0.5em;
+}
+
+h1, h2, h3, h4 
+{ 
+  color: #999;
+  font-family: sans-serif;
+/*  text-transform: lowercase; */
+}
+h3 { font-weight: bold; font-size: 175%; }
+/*
+h1:before, h2:before, h3:before, h4:before { color: gold; content: '(' }
+h1:after, h2:after, h3:after, h4:after { color: gold; content: ')' }
+*/
+
+hr { border: 0; background: black; height: 1px }
+/* a { font-weight: bold; font-family: sans-serif; text-decoration: none } */
+/* a { color: blue } */
+a.internal { color: #0077bb ; }
+a:visited.internal { color: #004488; } 
+a.hyperspec { font-weight: bold; }
+
+a[href]:hover { background: #ff9 }
+
+table { border-collapse: collapse; border: 1px solid #aaa; }
+th 
+{ 
+  font-family: sans-serif; 
+  background: royalblue;
+  color: white;
+  text-transform: lowercase 
+}
+th, td { padding: 0.2em 0.3em }
+
+ul li { list-style-type: square }
+
+pre
+{ 
+  background: #cdf; 
+  border: 1px solid #679; 
+  color: #235; 
+  font-size: 90%;
+  padding: 0.3em;
+}
+
+/*
+ * banner
+ */
+#banner
+{ 
+  background: steelblue;
+  border: 1px solid black;
+  color: white;
+  margin: 0; padding: 0.5em 0.5em 1.5em;
+}
+#banner a { color: white; font-weight: normal; text-decoration: none; padding: 0 }
+#banner a:hover { background: transparent; color: white }
+#banner a.logo { font-family: serif; font-weight: bold; font-size: 250% }
+#banner a.logo .sub 
+{ 
+  color: gold;
+  font-size: 90%; 
+  position: relative; top: -0.3em; 
+}
+
+.search
+{ 
+  float: right;
+  text-align: right;
+  text-transform: lowercase;
+}
+.search input { border: 1px solid black }
+
+#navbar { margin: 1em 0 -0.5em 0 }
+#navbar a 
+{ 
+  border: 1px solid gold;
+  border-width: 1px 0 1px 0;
+  font-size: 90%;
+  margin: 0 1em; padding: 0 0.2em 
+}
+#navbar a:hover
+{ 
+  border: 1px solid white;
+  border-width: 1px 0 1px 0;
+}
+
+.lastedit 
+{ 
+  color: gold;
+  float: right;
+  text-align: right; 
+  text-transform: lowercase;
+  margin: 0; padding: 0
+}
+
+/*
+ * content
+ */
+#content
+{ 
+  clear: both;
+  margin: 0; padding: 0 1.5em;
+}
+
+/*
+ * footer
+ */
+#footer
+{ 
+  background: steelblue;
+  color: white;
+  border: 1px solid black;
+  font-family: sans-serif;
+  margin-top: 0.5em; padding: 0.5em;
+}
+#footer a[href] { color: gold; text-decoration: none }
+#footer a[href]:hover { background: transparent; color: gold }
+.disclaimer { font-weight: bold }
+" stream))
 
 (defun cliki-list-all-pages-handler (request)
   (let* ((pages (loop for p being the hash-values of
