@@ -75,13 +75,16 @@
       (format out "
  <form method=post>
  <!-- textarea wrap=virtual name=text rows=20 cols=80 -->~%")
-      (if page
-	  (with-open-file (in-stream (page-pathname page) :direction :input)
-	    (write-page-form-to-stream cliki in-stream out))
-	  (format out "<input type=hidden name=T0 value=BODY>
+      (let ((default (format nil "<input type=hidden name=T0 value=BODY>
 <textarea wrap=virtual name=E0 rows=20 cols=80>
 Describe _(~A) here
-</textarea>" title))
+</textarea>" title)))
+	(if page
+	    (with-open-file (in-stream (page-pathname page) :direction :input)
+	      (if (zerop (file-length in-stream))
+		  (write-sequence default out)
+		  (write-page-form-to-stream cliki in-stream out)))
+	    (write-sequence default out)))
       (format out "<!-- /textarea-->
  <br>Please supply ~Aa summary of changes for the Recent Changes page.  If you are making a minor alteration to a page you recently edited, you can avoid making another Recent Changes entry by leaving the Summary box blank
  <br><b>Summary of changes:</b>
