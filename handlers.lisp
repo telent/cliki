@@ -133,6 +133,12 @@
   (restore-recent-changes directory)
   (export-handler base-url 'cliki-get-handler
 		  :method :get :stage *cliki-handlers*)
+  (export-handler base-url
+		  (lambda (r rest)
+		    (declare (ignore rest))
+		    (request-redirect
+		     r (merge-url (request-url r) "index")))
+		  :match :exact :method :get :stage *cliki-handlers*)
   (export-handler base-url 'cliki-head-handler
 		  :method :head :stage *cliki-handlers*)
   (export-handler base-url 'cliki-post-handler 
