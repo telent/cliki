@@ -20,7 +20,7 @@
 
 (defvar *hyperspec-filenames* (make-hash-table :test #'equal :size 100))
 
-(defconstant +hyperspec-alist+
+(defvar *hyperspec-alist*
 	'(("&allow-other-keys" "sec_3-4-1.html")
 	  ("&aux" "sec_3-4-1.html")
 	  ("&body" "sec_3-4-4.html")
@@ -1042,7 +1042,7 @@
 
 ;; fill the hashtable from the alist
 (eval-when (:load-toplevel :execute)
-  (loop :for (term fname) in +hyperspec-alist+ :do
+  (loop :for (term fname) in *hyperspec-alist* :do
         (setf (gethash term *hyperspec-filenames*) fname)))
 
 (defun hyperspec-url (term)

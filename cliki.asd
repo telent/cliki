@@ -26,6 +26,10 @@
                (:file "edit" :depends-on ("indexing" "recent-changes"))
                (:file "search" :depends-on ("indexing"))
                (:file "handlers" :depends-on
-                      ("view" "indexing" "view-source" "edit" "search"))))
+                      ("view" "indexing" "view-source" "edit" "search"))
+	       (:static-file "TODO")
+	       (:static-file "make-TODO" :pathname "make-TODO.pl")
+	       (:static-file "NEWS")
+	       (:static-file "README")))
 
 

@@ -10,7 +10,7 @@ http://ww.telent.net/sbcl-internals/
 You need Araneida (http://araneida.telent.net/) and all that that
 implies.
 
-Use mk-defsystem with the system definition 
+Use asdf with the system definition 
 
 * Using it
 
