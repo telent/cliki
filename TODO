@@ -12,8 +12,26 @@ use net.telent.date
 We need to be able to edit a page's aliases, which involves UI design
 of some kind.  Another box on the edit page?
 
+Now we have some versioning support, but more features necessary
+ - show diffs to/from other versions: needs UI thought
+ - support "keep only n versions"
+
+Tighten up username cookies: send the user a cookie which has their
+name /and/ some opaque data that we can compare to.  Save whole thing
+in Recent Changes, so they can't fake someone else's username to
+overwrite their change.
+
+handle the cliki-page-save-rejected signals somewhere, in a way that
+will make the text show up in the browser window, not the error log.
+
+
+Can we make *(Delete this page) do more to make a page look deleted?
+Hard to say what exactly, though: if it's not got any links and stuff
+it should be mostly inaccessible other than from Recent Changes.
+Could lose it from admin/all-pages, I suppose
+
+
 * CLiki
-** funny chars in page names 
 ** topic synonyms, UI for
 
 these would be really good for using cliki as backend half of a
