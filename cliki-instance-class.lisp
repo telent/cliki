@@ -9,6 +9,14 @@
    (recent-changes :accessor cliki-recent-changes :initform (list))
    (idf)
    (handlers  :accessor cliki-handlers :initform (list nil))
-   (pages :accessor cliki-pages :initform (make-hash-table :test 'equal))))
+   (pages :accessor cliki-pages :initform (make-hash-table :test 'equal))
+   (short-forms :accessor cliki-short-forms
+		:initarg :short-forms
+		:initform '((#\_ :link)
+			    (#\* :topic)
+			    (#\/ :search)
+			    (#\# ((#\H :clhs)))
+			    (#\> :download)
+			    (#\: :long-form)))))
 
 
