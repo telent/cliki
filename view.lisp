@@ -6,59 +6,56 @@
   (let* ((stream (request-stream request))
          (home (cliki-url-root cliki)))
     (labels ((ahref (l) (urlstring (araneida:merge-url home l)))) 
-      (let ((out
-	     (html
-	      `(html
-		(head (title ,(format nil "CLiki : ~A" title))
-		 ,@head
-		 ((link :rel "alternate"
-			:type "application/rss+xml"
-			:title "Recent Changes"
-			:href
-			,(urlstring (merge-url (cliki-url-root cliki)
-					       "recent-changes.rdf"))))
-		 ((link :rel "stylesheet" :href
-			,(urlstring (merge-url (cliki-url-root cliki)
-					       "admin/cliki.css")))))
-		(body
-		 ((table :width "100%")
-		  (tr
-		   (td ((a :href ,(urlstring home))
-			((img :border 0 :src "/cliki.png" :alt "[ Home ]"))))
-		   ((td :colspan 3) "CLiki pages can be edited by anybody at any time.  Imagine a <i>scarily comprehensive legal disclaimer</i>.  Double it.  Add two.  <!-- Now shut your eyes.  Dark, isn't it? -->")))
-		 (center
-		  (table
-		   (tr
-		    (td ((a :href ,(ahref "#")) "[ Home ]"))
-		    (td ((a :href ,(ahref "Recent%20Changes")) "[ Recent Changes ]"))
-		    (td ((a :href ,(ahref "CLiki")) "[ About CLiki ]"))
-		    (td ((a :href ,(ahref "Text%20Formatting")) "[ Text Formatting ]"))
-		    (td ((a :onclick
-			    ,(format nil "if(name=window.prompt('New page name ([A-Za-z0-9 ])')) document.location='~Aedit/'+name ;return false;"
-				     (urlstring home))
-			    :href "#")
-			 "[ Create new page ]")))
-		   ))
-		 (hr)
-		 (h1 ,title)
-		 (deleteme))))))
-	(write-sequence
-	 (subseq out 0 (search "<DELETEME>" out))
-	 stream)))))
+            (let ((out
+                   (html
+                    `(html
+                      (head (title ,(format nil "CLiki : ~A" title))
+                            ,@head
+                            ((link :rel "alternate"
+                                   :type "application/rss+xml"
+                                   :title "Recent Changes"
+                                   :href ,(ahref  "recent-changes.rdf")))
+                            ((link :rel "stylesheet" :href ,(ahref "admin/cliki.css"))))
+                      (body
+                       ((div :id "banner")
+
+                        ((form :class "search" :action "http://www.cliki.net/admin/search")
+                         ((input :name "words" :size "30"))
+                         ((input :type "submit" :value "search")))
+                        
+                        ((a :title "CLiki home page" :class "logo" :href ,(ahref nil))
+                         "CL" ((span :class "sub") "iki"))
+                        (span "the common lisp wiki")
+                        ((div :id "navbar")
+                         ((a :href ,(ahref "recent changes")) "recent changes")
+                         ((a :href ,(ahref (format nil "edit/~A "title))) "edit this page")
+                         ((a :href ,(ahref (format nil "~A?source" title))) "view source")
+                         ((a :onclick ,(format nil "if(name=window.prompt('New page name ([A-Za-z0-9 ])')) document.location='~A/edit/'+name ;return false;" title) :href "#")
+                          "create new page")
+                         ((a :href ,(ahref "CLiki")) "about CLiki")
+                         ((a :href ,(ahref "Text Formatting")) "text formatting")))
+
+                       (h1 ,title)
+                       (deleteme))))))
+              (write-sequence
+               (subseq out 0 (search "<DELETEME>" out))
+               stream)))))
 
 (defmethod cliki-page-footer
     ((cliki cliki-instance) request title)
-  (let ((page (find-page cliki title)))
-    (format (request-stream request)
-	    "<hr><form action=\"~Aadmin/search\"><a href=\"edit/~A\">Edit page</a> | <a href=\"~A?source\">View source</a> |  Last edit: ~A | <a href=\"CLiki+Search\"> Search:</a> <input name=words size=20></form>"
-	    (urlstring (cliki-url-root cliki))
+  (let ((page (find-page cliki title))
+	(out (request-stream request)))
+    (format out
+	    "<hr><div id=\"footer\"><a href=\"edit/~A\">Edit page</a> | <a href=\"~A?source\">View source</a> | Last edit: ~A "
+	    ;(urlstring (cliki-url-root cliki))
 	    (urlstring-escape title) (urlstring-escape title)
 	    (if page
 		(universal-time-to-rfc-date
 		 (file-write-date (page-pathname page)))
-		"(none)"))))
+		"(none)"))
+    (format out "<p class=\"disclaimer\">
+CLiki pages can be edited by anyone at any time.  Imagine a scarily comprehensive legal disclaimer.  Double it.  Add two.</p>")))
 
-    
 (defun print-page-selector
     (stream start-of-page number-on-page total-length urlstring-stub)
   "Print result page selector with `previous', `next', and numbered links to each result page. Form links by glomming offset to URLSTRING-STUB"
