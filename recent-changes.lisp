@@ -23,9 +23,10 @@
   (with-open-file (in (merge-pathnames "admin/recent-changes.dat" root)
 		      :direction :input)
     (loop for entry = (read in nil nil)
+	  do (format t "~A~%" entry)
 	  while (and entry (or (not max-entries) (> max-entries 0)))
           if max-entries do (decf max-entries)
-          do (cons entry *recent-changes-list*))))
+          do (push entry *recent-changes-list*))))
 
 
 (defun add-recent-change (root date title user &optional description)
@@ -42,7 +43,7 @@
 (defun same-day-p (date1 date2)
   (let ((start-of-date1
          (with-date date1
-           (encode-universal-time 0 0 0 date month year))))
+           (encode-universal-time 0 0 0 day-of-month month year))))
     (<= start-of-date1 date2 (+ start-of-date1 86400))))
 
 (defun view-recent-changes (request title root)
@@ -75,7 +76,7 @@
                        "</blockquote>
 <a name=~D><h3>~/cliki:dayname/ ~A ~/cliki:monthname/ ~A</h3></a>
 <blockquote>"
-                       this-date day date month year))
+                       this-date day day-of-month month year))
           do (with-date this-date
                (format out "<br> ~D:~2,'0D <b>~A</b> : ~A -- ~A ~%"
                        hour minute (write-a-href title root nil)
