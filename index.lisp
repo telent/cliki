@@ -48,15 +48,15 @@
   "Read all words in the page DOCUMENT, discard stopwords, and return a hash table word -> frequency"
   (let ((table (make-hash-table :test 'equal))
 	ret)
-    (labels ((add-word (word)
+    (labels ((add-word (word &optional weight)
 	       (let* ((stem (stem-for-word word))
 		      (n (gethash stem  table))
-		      (w (weight-for-word word)))
+		      (w (or weight (weight-for-word word))))
 		 (if (> w 0)
 		     (if (numberp n) (setf (gethash stem table) (+ w n))
 			 (setf (gethash stem table) w))))))
       (dolist (w (araneida::split (page-title document)))
-	(add-word w))
+	(add-word w 6))
       (with-open-file (i (page-pathname document) :direction :input)
 	  (loop for word = (read-word i)
 	   while word
