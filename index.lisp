@@ -121,7 +121,7 @@
   ;; for each of the pages, delete references to SOURCE-PAGE
   ;; (2) for each of the page titles in INDEX, find its page,
   ;; add link to SOURCE-PAGE
-  (labels ((fp (x) (find-page-or-placeholder cliki (car x))))
+  (labels ((fp (x) (find-page-or-placeholder cliki (list (car x)))))
     (dolist (target-page (mapcar #'fp (page-index source-page :topic)))
       (when target-page
 	(setf (page-topics target-page)
@@ -136,18 +136,17 @@
  (defmethod compute-index-for-page ((cliki cliki-instance)
 				    (source-page cliki-page)
 				    (index-name (eql :link)) index)
-   (labels ((fp (x) (find-page cliki (car x))))
-
-    (dolist (target-page (mapcar #'fp (page-index source-page :link)))
-      (when target-page 
-	(setf (page-backlinks target-page)
-	      (remove (page-title source-page) (page-backlinks target-page)
-		      :key #'page-title
-		      :test #'equal))))
-    (dolist (target-page (mapcar #'fp index))
-      (when target-page
-	(pushnew source-page (page-backlinks target-page)))))
-  index)
+   (labels ((fp (x) (find-page-or-placeholder cliki (list (car x)))))
+     (dolist (target-page (mapcar #'fp (page-index source-page :link)))
+       (when target-page 
+	 (setf (page-backlinks target-page)
+	       (remove (page-title source-page) (page-backlinks target-page)
+		       :key #'page-title
+		       :test #'equal))))
+     (dolist (target-page (mapcar #'fp index))
+       (when target-page
+	 (pushnew source-page (page-backlinks target-page)))))
+   index)
 
 
 
