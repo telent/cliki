@@ -40,6 +40,7 @@
 	       (:file "buffered-output-stream" :depends-on
 		      ("buffered-output-stream-class"))
                (:file "elided-stream" :depends-on ("buffered-output-stream"))
+               (:file "escape-html-stream" :depends-on ("buffered-output-stream"))
 	       (:file "strip-html-stream" :depends-on ("buffered-output-stream"))
                (:file "search" :depends-on ("index" "elided-stream" "strip-html-stream"))
                (:file "handlers" :depends-on

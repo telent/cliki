@@ -50,7 +50,10 @@
 			   element-num)
 		   (format stream "<TEXTAREA rows=~A cols=80 name=E~A>~%"
 			   (min 15 (floor (* cr 1.5))) element-num)
-		   (write-sequence buf stream)
+                  (let ((str (make-instance 'escape-html-stream
+                                            :output-stream stream)))
+                    (write-sequence buf str)
+                    (force-output str))
 		   (format stream "</TEXTAREA>~%")
 		   (incf element-num) )))
 	     (output (c) (write-char c acc-stream)))
